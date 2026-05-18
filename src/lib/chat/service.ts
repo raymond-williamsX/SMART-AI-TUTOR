@@ -11,7 +11,7 @@ const SYSTEM_PROMPT = `You are EduAgent, a professional AI tutor. When respondin
 Respond in a supportive, encouraging tone suitable for learners.`;
 
 async function callGeminiAPI(prompt: string): Promise<string> {
-  const geminiKey = process.env.GEMINI_API_KEY ?? env.NEXT_PUBLIC_GEMINI_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY ?? env.GEMINI_API_KEY;
 
   // Placeholder: if API key is not configured, return a deterministic mock response.
   if (!geminiKey) {
