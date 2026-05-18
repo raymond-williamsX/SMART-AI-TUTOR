@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChatContainer } from "@/components/chat/ChatContainer";
+import { ChatContainer } from "../../components/chat/ChatContainer";
 
 export default function ChatPage() {
   return (
