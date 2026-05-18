@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import type { ReactNode } from "react";
 
 export function AuthShell({
   title,
@@ -8,7 +9,7 @@ export function AuthShell({
 }: Readonly<{
   title: string;
   description: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">

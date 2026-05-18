@@ -7,7 +7,6 @@ import { Sparkles } from "lucide-react";
 import { navigationItems } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -50,7 +49,7 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto space-y-4 pt-6">
-        <Separator />
+        <div className="h-px w-full bg-white/10" />
         <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
           <p className="text-sm font-medium text-white">RAG ready architecture</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
