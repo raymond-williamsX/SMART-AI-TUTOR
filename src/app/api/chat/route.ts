@@ -14,7 +14,8 @@ export async function POST(req: Request) {
     const aiMessage = await getAIResponse(messages);
 
     return NextResponse.json({ message: aiMessage });
-  } catch (err) {
+  } catch (error) {
+  console.error(error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
