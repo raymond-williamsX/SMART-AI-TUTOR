@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[96361,["/_next/static/chunks/0-2ldle4ipkno.js","/_next/static/chunks/12n4esrdkofe_.js","/_next/static/chunks/0on~h537oom3q.js","/_next/static/chunks/0gdasnb1_slic.js"],"ChatContainer"]
+3:I[7848,["/_next/static/chunks/0-2ldle4ipkno.js","/_next/static/chunks/12n4esrdkofe_.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"rounded-3xl border border-white/10 text-card-foreground shadow-glow backdrop-blur-xl bg-white/[0.03]","children":[["$","div",null,{"className":"flex flex-col gap-1.5 p-6","children":["$","div",null,{"className":"flex items-center justify-between gap-4","children":["$","h3",null,{"className":"font-heading text-lg font-semibold tracking-tight","children":"AI Tutoring Chat"}]}]}],["$","div",null,{"className":"p-6 pt-0","children":["$","$L2",null,{}]}]]}],[["$","script","script-0",{"src":"/_next/static/chunks/0on~h537oom3q.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/0gdasnb1_slic.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"OH0_oh-FeTPs_eFbVE4RJ"}
+5:null

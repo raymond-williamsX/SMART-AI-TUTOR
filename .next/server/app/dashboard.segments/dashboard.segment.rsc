@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[3682,["/_next/static/chunks/0-2ldle4ipkno.js","/_next/static/chunks/12n4esrdkofe_.js","/_next/static/chunks/0gd91q0bfu12n.js","/_next/static/chunks/0evbkq~lhn4ge.js"],"Sidebar"]
+3:I[27976,["/_next/static/chunks/0-2ldle4ipkno.js","/_next/static/chunks/12n4esrdkofe_.js","/_next/static/chunks/0gd91q0bfu12n.js","/_next/static/chunks/0evbkq~lhn4ge.js"],"Topbar"]
+4:I[11127,["/_next/static/chunks/0-2ldle4ipkno.js","/_next/static/chunks/12n4esrdkofe_.js"],"default"]
+5:I[14087,["/_next/static/chunks/0-2ldle4ipkno.js","/_next/static/chunks/12n4esrdkofe_.js"],"default"]
+0:{"rsc":["$","$1","c",{"children":[[["$","script","script-0",{"src":"/_next/static/chunks/0gd91q0bfu12n.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/0evbkq~lhn4ge.js","async":true}]],["$","div",null,{"className":"flex min-h-screen bg-background","children":[["$","$L2",null,{}],["$","div",null,{"className":"flex min-h-screen flex-1 flex-col","children":[["$","$L3",null,{}],["$","main",null,{"className":"flex-1 px-4 py-6 sm:px-6 lg:px-8","children":["$","$L4",null,{"parallelRouterKey":"children","template":["$","$L5",null,{}]}]}]]}]]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"OH0_oh-FeTPs_eFbVE4RJ"}
