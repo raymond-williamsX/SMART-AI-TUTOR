@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PaperPlane } from "lucide-react";
+import { SendHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -30,7 +30,7 @@ export function ChatInput({ onSend, disabled }: { onSend: (text: string) => void
         disabled={disabled}
       />
       <Button onClick={submit} disabled={disabled} size="icon" aria-label="Send message">
-        <PaperPlane className="h-4 w-4" />
+        <SendHorizontal className="h-4 w-4" />
       </Button>
     </div>
   );
