@@ -60,7 +60,8 @@ export function ChatContainer() {
           { id: `ai-${Date.now()}`, role: "assistant", content: "Sorry, no response.", timestamp: Date.now() },
         ]);
       }
-    } catch (err) {
+    } catch (error) {
+  console.error(error);
       setMessages((m) => [
         ...m,
         { id: `ai-${Date.now()}`, role: "assistant", content: "Network error. Try again.", timestamp: Date.now() },
