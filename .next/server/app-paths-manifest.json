@@ -3,11 +3,11 @@
   "/api/chat/route": "app/api/chat/route.js",
   "/api/health/route": "app/api/health/route.js",
   "/chat/page": "app/chat/page.js",
-  "/progress/page": "app/progress/page.js",
   "/schedule/page": "app/schedule/page.js",
-  "/upload/page": "app/upload/page.js",
   "/page": "app/page.js",
-  "/(auth)/signup/page": "app/(auth)/signup/page.js",
+  "/progress/page": "app/progress/page.js",
+  "/upload/page": "app/upload/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/(auth)/signup/page": "app/(auth)/signup/page.js"
 }
