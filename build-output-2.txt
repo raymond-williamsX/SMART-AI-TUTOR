@@ -1,0 +1,43 @@
+
+> eduagent-ai@0.1.0 build
+> next build
+
+ΓÜá Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\USER\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\USER\Desktop\CODE PROJECTS\SMART TUTOR AI\package-lock.json
+
+Γû▓ Next.js 16.2.6 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 35.6s
+  Running TypeScript ...
+  Finished TypeScript in 22.8s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/12) ...
+  Generating static pages using 3 workers (3/12) 
+  Generating static pages using 3 workers (6/12) 
+  Generating static pages using 3 workers (9/12) 
+Γ£ô Generating static pages using 3 workers (12/12) in 1326ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ ╞Æ /api/chat
+Γö£ ╞Æ /api/health
+Γö£ Γùï /chat
+Γö£ Γùï /dashboard
+Γö£ Γùï /login
+Γö£ Γùï /progress
+Γö£ Γùï /schedule
+Γö£ Γùï /signup
+Γöö Γùï /upload
+
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

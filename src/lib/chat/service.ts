@@ -1,5 +1,5 @@
-import { ChatMessage } from "./types";
-import { env } from "@/lib/env";
+import { generateText } from "@/lib/gemini/client";
+import type { ChatMessage } from "./types";
 
 const SYSTEM_PROMPT = `You are EduAgent, a professional AI tutor. When responding, do the following:
 - Act as a knowledgeable and patient tutor.
@@ -11,64 +11,19 @@ const SYSTEM_PROMPT = `You are EduAgent, a professional AI tutor. When respondin
 Respond in a supportive, encouraging tone suitable for learners.`;
 
 async function callGeminiAPI(prompt: string): Promise<string> {
-  const geminiKey = process.env.GEMINI_API_KEY ?? env.NEXT_PUBLIC_GEMINI_API_KEY;
-
-  // Placeholder: if API key is not configured, return a deterministic mock response.
-  if (!geminiKey) {
-    return [
-      "I can help with that.",
-      "",
-      "1) Let us define the core concept first.",
-      "2) Then we break it into smaller steps.",
-      "3) Finally we apply it with one practical example.",
-      "",
-      "Quick check: which part would you like to go deeper on?",
-    ].join("\n");
-  }
-
-  // Server-side Gemini HTTP call.
   try {
-    const res = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-      {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": geminiKey,
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: `${SYSTEM_PROMPT}\n\n${prompt}` }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.6,
-          maxOutputTokens: 800,
-        },
-      }),
-      }
-    );
+    const promptWithSystem = `${SYSTEM_PROMPT}\n\n${prompt}`;
+    const result = await generateText(promptWithSystem);
+    const text = (result?.text ?? "").toString().trim();
 
-    if (!res.ok) {
-      return "I could not reach the tutoring model right now. Please try again in a moment.";
+    if (!text) {
+      console.error("[chat] Gemini returned empty payload", { raw: result?.raw });
+      return "Sorry, the tutoring service did not return a response. Please try again.";
     }
 
-    const data = await res.json();
-
-    const content =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((part: { text?: string }) => part?.text ?? "")
-        .join("\n")
-        .trim() ?? "";
-
-    if (!content) {
-      return "I was not able to generate a response for that prompt. Could you rephrase your question?";
-    }
-
-    return String(content);
-  } catch {
+    return text;
+  } catch (err) {
+    console.error("[chat] callGeminiAPI error", err);
     return "Sorry, the tutoring service is temporarily unavailable. Please retry.";
   }
 }

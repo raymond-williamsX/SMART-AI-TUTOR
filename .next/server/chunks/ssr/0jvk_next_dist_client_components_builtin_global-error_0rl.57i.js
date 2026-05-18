@@ -1,0 +1,3 @@
+module.exports=[33027,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(21969);a.n(d("[project]/Desktop/CODE PROJECTS/SMART TUTOR AI/node_modules/next/dist/client/components/builtin/global-error.js <module evaluation>"))},28759,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(21969);a.n(d("[project]/Desktop/CODE PROJECTS/SMART TUTOR AI/node_modules/next/dist/client/components/builtin/global-error.js"))},94834,a=>{"use strict";a.i(33027);var b=a.i(28759);a.n(b)},81048,a=>{a.n(a.i(94834))}];
+
+//# sourceMappingURL=0jvk_next_dist_client_components_builtin_global-error_0rl.57i.js.map
