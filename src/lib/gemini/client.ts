@@ -1,5 +1,3 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
 type GenerateResult = {
   text: string;
   raw: unknown;
@@ -17,56 +15,68 @@ function getApiKey(): string {
   return apiKey;
 }
 
-const genAI = new GoogleGenerativeAI(getApiKey());
-
-const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
-});
-
 export async function generateText(
   prompt: string
 ): Promise<GenerateResult> {
   try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
+    const apiKey = getApiKey();
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-    // Validate response before extracting text
-    if (!response) {
-      console.error("[Gemini Error] Response is null or undefined");
-      throw new Error("Gemini returned no response object");
-    }
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt,
+              },
+            ],
+          },
+        ],
+      }),
+    });
 
-    // Check if text() method exists and is callable
-    if (typeof response.text !== "function") {
-      console.error("[Gemini Error] response.text is not a function", {
-        responseKeys: Object.keys(response),
-        responseType: typeof response,
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage =
+        errorData?.error?.message || `HTTP ${response.status}`;
+      console.error("[Gemini Error] API request failed", {
+        status: response.status,
+        error: errorMessage,
       });
-      throw new Error("Invalid response structure from Gemini API");
+      throw new Error(`Gemini API error: ${errorMessage}`);
     }
 
-    let text: string;
-    try {
-      text = response.text();
-    } catch (textError) {
-      console.error("[Gemini Error] Failed to extract text from response", {
-        error: textError,
-        responseStatus: (response as any)?.promptFeedback?.blockReason,
-      });
-      throw new Error(`Failed to extract text: ${String(textError)}`);
-    }
+    const data = (await response.json()) as {
+      candidates?: Array<{
+        content?: {
+          parts?: Array<{
+            text?: string;
+          }>;
+        };
+      }>;
+    };
+
+    // Extract text from response
+    const text =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     if (!text || text.trim() === "") {
       console.error("[Gemini Error] Response text is empty", {
-        rawResponse: response,
-        promptFeedback: (response as any)?.promptFeedback,
+        rawResponse: data,
       });
-      throw new Error("Gemini API returned empty response. Check API key and rate limits.");
+      throw new Error(
+        "Gemini API returned empty response. Check API key and rate limits."
+      );
     }
 
     return {
       text,
-      raw: response,
+      raw: data,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
