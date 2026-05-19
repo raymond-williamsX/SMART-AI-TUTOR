@@ -23,8 +23,12 @@ async function callGeminiAPI(prompt: string): Promise<string> {
 
     return text;
   } catch (err) {
-    console.error("[chat] callGeminiAPI error", err);
-    return "Sorry, the tutoring service is temporarily unavailable. Please retry.";
+    const errorDetails = err instanceof Error ? err.message : String(err);
+    console.error("[chat] callGeminiAPI error", {
+      error: errorDetails,
+      timestamp: new Date().toISOString(),
+    });
+    return `Sorry, the tutoring service encountered an error: ${errorDetails}. Please check your API key and try again.`;
   }
 }
 
