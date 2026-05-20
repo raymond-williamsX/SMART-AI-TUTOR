@@ -2,8 +2,11 @@ import { CalendarDays } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { requireUser } from "@/lib/auth/require-user";
 
-export default function SchedulePage() {
+export default async function SchedulePage() {
+  await requireUser("/schedule");
+
   return (
     <AppShell>
       <Card className="bg-white/[0.03]">

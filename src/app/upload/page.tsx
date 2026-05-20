@@ -2,8 +2,11 @@ import { UploadCloud } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { requireUser } from "@/lib/auth/require-user";
 
-export default function UploadPage() {
+export default async function UploadPage() {
+  await requireUser("/upload");
+
   return (
     <AppShell>
       <Card className="border-dashed border-white/15 bg-white/[0.03]">

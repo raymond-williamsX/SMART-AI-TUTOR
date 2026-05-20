@@ -1,8 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChatContainer } from "../../components/chat/ChatContainer";
+import { requireUser } from "@/lib/auth/require-user";
 
-export default function ChatPage() {
+export default async function ChatPage() {
+  await requireUser("/chat");
+
   return (
     <AppShell>
       <div className="space-y-6">
