@@ -22,7 +22,7 @@ export function Sidebar({ collapsed, onToggleCollapsed }: { collapsed?: boolean;
           </div>
         </div>
         <div className="mt-4 flex items-center gap-2">
-          <Badge className="border-cyan-300/20 bg-cyan-300/10 text-cyan-100">Phase 1 shell</Badge>
+          <Badge className="border-cyan-300/20 bg-cyan-300/10 text-cyan-100">Learning workspace</Badge>
         </div>
       </div>
 

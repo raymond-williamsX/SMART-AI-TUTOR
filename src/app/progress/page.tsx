@@ -16,7 +16,7 @@ export default async function ProgressPage() {
             Progress tracking
           </CardTitle>
           <CardDescription>
-            Learning analytics, mastery tracking, and weak topic insights will be added in Phase 13.
+            Visualize your mastery over topics, track progress over time, and uncover weak areas so you can focus your study sessions more effectively.
           </CardDescription>
         </CardHeader>
         <CardContent>

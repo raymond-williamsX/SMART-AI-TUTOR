@@ -20,10 +20,10 @@ export default async function DashboardPage() {
             <div className="max-w-2xl space-y-5">
               <Badge className="border-cyan-300/20 bg-cyan-300/10 text-cyan-100">Premium AI tutoring shell</Badge>
               <h1 className="font-heading text-4xl font-semibold tracking-tight text-white text-balance sm:text-5xl">
-                Build a tutoring workspace that feels like a modern AI product, not a school portal.
+                Your personalized AI tutor — study smarter, not harder.
               </h1>
               <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                This dashboard is designed for document tutoring, open-ended topic tutoring, notes, quizzes, scheduling, and progress tracking.
+                Upload course materials, ask targeted questions, and let EduAgent generate step-by-step explanations, summaries, and study plans tailored to your needs.
               </p>
             </div>
             <Button className="w-fit">

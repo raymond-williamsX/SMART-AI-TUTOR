@@ -114,6 +114,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw signOutError;
       }
     },
+    signInWithProvider: async (provider: string, redirectTo?: string) => {
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      setError(null);
+
+      const options: any = {};
+      if (redirectTo) options.redirectTo = redirectTo;
+
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: provider as any,
+        options,
+      });
+
+      if (oauthError) {
+        throw oauthError;
+      }
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

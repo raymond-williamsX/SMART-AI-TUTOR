@@ -21,7 +21,7 @@ export default async function UploadPage() {
         </CardHeader>
         <CardContent>
           <div className="flex min-h-[320px] items-center justify-center rounded-[2rem] border border-dashed border-white/10 bg-slate-950/40 text-sm text-slate-400">
-            Drop PDF, notes, or slides here.
+            Drop images, screenshots, or slides here (PNG, JPG, WEBP, PDF). EduAgent will analyze uploaded materials and generate summaries, notes, and study aids.
           </div>
         </CardContent>
       </Card>

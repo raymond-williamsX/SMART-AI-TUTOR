@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 
 export function SignupForm({ redirectTo = "/dashboard" }: { redirectTo?: string }) {
   const router = useRouter();
-  const { signUp, ready, error: authError } = useAuth();
+  const { signUp, ready, error: authError, signInWithProvider } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -78,6 +78,20 @@ export function SignupForm({ redirectTo = "/dashboard" }: { redirectTo?: string 
       <Button className="w-full" type="submit" disabled={loading || !ready}>
         {loading ? "Creating account..." : "Create account"}
       </Button>
+      <div className="flex items-center justify-center">
+        <Button variant="ghost" type="button" onClick={async () => {
+          try {
+            setLoading(true);
+            await signInWithProvider?.("google", redirectTo);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+          } finally {
+            setLoading(false);
+          }
+        }}>
+          Continue with Google
+        </Button>
+      </div>
       <p className="text-center text-sm text-slate-400">
         Already have an account? <Link href="/login" className="text-cyan-300 hover:text-cyan-200">Sign in</Link>
       </p>
