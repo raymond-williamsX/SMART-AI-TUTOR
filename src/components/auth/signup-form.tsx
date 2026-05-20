@@ -8,14 +8,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function SignupForm({ redirectTo = "/dashboard" }: { redirectTo?: string }) {
+export function SignupForm({ redirectTo = "/dashboard", initialErrorMessage }: { redirectTo?: string; initialErrorMessage?: string }) {
   const router = useRouter();
   const { signUp, ready, error: authError, signInWithProvider } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialErrorMessage ?? null);
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -79,11 +79,13 @@ export function SignupForm({ redirectTo = "/dashboard" }: { redirectTo?: string 
         {loading ? "Creating account..." : "Create account"}
       </Button>
       <div className="flex items-center justify-center">
-        <Button variant="ghost" type="button" onClick={async () => {
+        <Button variant="ghost" type="button" disabled={loading || !ready} onClick={async () => {
           try {
             setLoading(true);
+            console.info("[auth:signup] google oauth start", { redirectTo });
             await signInWithProvider?.("google", redirectTo);
           } catch (err) {
+            console.error("[auth:signup] google oauth failed", { error: err });
             setError(err instanceof Error ? err.message : String(err));
           } finally {
             setLoading(false);

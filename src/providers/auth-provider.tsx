@@ -5,11 +5,12 @@ import type { Session } from "@supabase/supabase-js";
 
 import { AuthContext, type AuthCredentials, type SignUpCredentials } from "@/context/auth-context";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { buildOAuthRedirectUrl } from "@/lib/auth/oauth";
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children, initialSession }: { children: ReactNode; initialSession?: Session | null }) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(initialSession ?? null);
+  const [loading, setLoading] = useState(!initialSession);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -29,9 +30,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (sessionError) {
+          console.warn("[auth:provider] session restore failed", {
+            message: sessionError.message,
+          });
           setError(sessionError.message);
         }
 
+        console.info("[auth:provider] session restored", {
+          hasSession: Boolean(data.session),
+          userId: data.session?.user?.id,
+        });
         setSession(data.session ?? null);
       })
       .finally(() => {
@@ -45,6 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      console.info("[auth:provider] auth state changed", {
+        hasSession: Boolean(nextSession),
+        userId: nextSession?.user?.id,
+      });
       setSession(nextSession);
       setError(null);
       setLoading(false);
@@ -121,8 +133,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setError(null);
 
-      const options: any = {};
-      if (redirectTo) options.redirectTo = redirectTo;
+      const options: any = {
+        redirectTo: buildOAuthRedirectUrl(redirectTo ?? "/dashboard"),
+      };
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: provider as any,

@@ -10,6 +10,8 @@ import { MetricCard } from "@/components/dashboard/metric-card";
 import { ModeCard } from "@/components/dashboard/mode-card";
 import { requireUser } from "@/lib/auth/require-user";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   await requireUser("/dashboard");
 
