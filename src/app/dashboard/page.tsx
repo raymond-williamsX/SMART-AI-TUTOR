@@ -7,8 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { dashboardStats, tutorModes } from "@/lib/theme";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { ModeCard } from "@/components/dashboard/mode-card";
+import { requireUser } from "@/lib/auth/require-user";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  await requireUser("/dashboard");
+
   return (
     <AppShell>
       <div className="space-y-8">

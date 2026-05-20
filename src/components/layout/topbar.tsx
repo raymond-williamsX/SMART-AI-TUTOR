@@ -1,17 +1,35 @@
 "use client";
 
 import { Bell, Search, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+
 import { MobileNav } from "./MobileNav";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { navigationItems } from "@/lib/navigation";
+import { useAuth } from "@/hooks/use-auth";
 
 export function Topbar() {
+  const router = useRouter();
   const pathname = usePathname();
   const currentPage = navigationItems.find((item) => item.href === pathname);
+  const { user, signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    try {
+      setSigningOut(true);
+      await signOut();
+      router.push("/login");
+      router.refresh();
+    } finally {
+      setSigningOut(false);
+    }
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
@@ -27,13 +45,18 @@ export function Topbar() {
             <Bell className="h-4 w-4" />
           </Button>
           <ThemeToggle />
-          <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-300 to-sky-500" />
-            <div className="hidden sm:block">
-              <p className="text-sm font-medium text-white">Student Admin</p>
-              <p className="text-xs text-slate-400">Phase 1 preview</p>
+          {user ? (
+            <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-300 to-sky-500" />
+              <div className="hidden sm:block">
+                <p className="text-sm font-medium text-white">{user.email ?? "Student Admin"}</p>
+                <p className="text-xs text-slate-400">{currentPage?.label ?? "Phase 1 preview"}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleSignOut} disabled={signingOut} className="border-white/10 bg-white/5 text-slate-200 hover:bg-white/10">
+                {signingOut ? "Signing out..." : "Sign out"}
+              </Button>
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
     </header>
