@@ -9,6 +9,8 @@ export type SupabaseCookieStore = {
   setAll: (cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) => void;
 };
 
+type CookieToSet = { name: string; value: string; options: CookieOptions };
+
 export async function createSupabaseServerClient(cookieStore?: SupabaseCookieStore) {
   const supabaseUrl = getSupabaseUrl();
   const supabaseAnonKey = getSupabaseKey();
@@ -35,7 +37,7 @@ export async function createSupabaseServerClient(cookieStore?: SupabaseCookieSto
       getAll() {
         return nextHeadersCookieStore.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value, options }) => {
           nextHeadersCookieStore.set({
             name,
@@ -54,7 +56,7 @@ export async function createSupabaseServerClient(cookieStore?: SupabaseCookieSto
         getAll() {
           return resolvedCookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: CookieToSet[]) {
           resolvedCookieStore.setAll(cookiesToSet);
         },
       },
