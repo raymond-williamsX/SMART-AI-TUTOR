@@ -1,8 +1,9 @@
+export { Topbar } from "./topbar";
 "use client";
 
 import { Bell, Search, Sparkles } from "lucide-react";
 import { usePathname } from "next/navigation";
-
+import { MobileNav } from "./MobileNav";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,20 +14,6 @@ export function Topbar() {
   const pathname = usePathname();
   const currentPage = navigationItems.find((item) => item.href === pathname);
 
-  return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/70 backdrop-blur-2xl">
-      <div className="flex items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
-        <div className="hidden flex-1 flex-col gap-1 md:flex">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.28em] text-cyan-300">
-            <Sparkles className="h-3.5 w-3.5" />
-            EduAgent AI
-          export { Topbar } from "./Topbar";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-
-export function Topbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
       <div className="flex items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
