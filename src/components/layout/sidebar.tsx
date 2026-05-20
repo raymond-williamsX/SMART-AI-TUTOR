@@ -1,4 +1,4 @@
-"use client";
+export { Sidebar } from "./Sidebar";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";

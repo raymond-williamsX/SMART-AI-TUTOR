@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
 import { Providers } from "@/components/providers";
+import "highlight.js/styles/github-dark.css";
 import "./globals.css";
 
 const headingFont = Space_Grotesk({
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${headingFont.variable} ${bodyFont.variable} font-body bg-background text-foreground antialiased`}>
+      <body className={`${headingFont.variable} ${bodyFont.variable} bg-background font-body text-foreground antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
