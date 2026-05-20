@@ -21,7 +21,16 @@
     "afterFiles": [],
     "fallback": []
   },
-  "dynamicRoutes": [],
+  "dynamicRoutes": [
+    {
+      "page": "/api/study-sessions/[id]",
+      "regex": "^/api/study\\-sessions/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/study\\-sessions/(?<nxtPid>[^/]+?)(?:/)?$"
+    }
+  ],
   "staticRoutes": [
     {
       "page": "/",
@@ -52,6 +61,12 @@
       "regex": "^/api/health(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/health(?:/)?$"
+    },
+    {
+      "page": "/api/study-sessions",
+      "regex": "^/api/study\\-sessions(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/study\\-sessions(?:/)?$"
     },
     {
       "page": "/auth/callback",

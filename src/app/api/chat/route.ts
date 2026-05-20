@@ -1,6 +1,42 @@
 import { NextResponse } from "next/server";
 import { getAIResponse } from "@/lib/chat/service";
 import type { ChatMessage } from "@/lib/chat/types";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { DEFAULT_STUDY_SESSION_TITLE, generateStudySessionTitle } from "@/lib/study-sessions/title";
+
+function getLastUserMessage(messages: ChatMessage[]) {
+  return [...messages].reverse().find((message) => message?.role === "user" && message?.content?.trim());
+}
+
+async function fetchSessionForUser(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, sessionId: string, userId: string) {
+  const { data, error } = await supabase
+    .from("study_sessions")
+    .select("id,title,topic_category,last_message,created_at,updated_at")
+    .eq("id", sessionId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+async function fetchSessionWithMessages(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, sessionId: string, userId: string) {
+  const { data, error } = await supabase
+    .from("study_sessions")
+    .select("id,title,topic_category,last_message,created_at,updated_at,study_messages(id,role,content,created_at)")
+    .eq("id", sessionId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
 
 export async function POST(req: Request) {
   const requestId = crypto.randomUUID();
@@ -8,12 +44,30 @@ export async function POST(req: Request) {
   try {
     const body: unknown = await req.json();
     const messages = (body as { messages?: ChatMessage[] })?.messages;
+    const sessionId = typeof (body as { sessionId?: unknown })?.sessionId === "string" ? (body as { sessionId?: string }).sessionId : null;
+    const supabase = await createSupabaseServerClient();
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
 
     console.info("[chat] request received", {
       requestId,
       hasMessages: Array.isArray(messages),
       messageCount: Array.isArray(messages) ? messages.length : 0,
     });
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          requestId,
+          error: {
+            code: "UNAUTHORIZED",
+            message: "You must be signed in to send chat messages.",
+          },
+        },
+        { status: 401 }
+      );
+    }
 
     if (!Array.isArray(messages)) {
       return NextResponse.json(
@@ -45,7 +99,144 @@ export async function POST(req: Request) {
       );
     }
 
+    let session = sessionId ? await fetchSessionForUser(supabase, sessionId, user.id) : null;
+
+    if (!session) {
+      const { data: createdSession, error: createSessionError } = await supabase
+        .from("study_sessions")
+        .insert({
+          user_id: user.id,
+          title: generateStudySessionTitle(lastUserMessage.content),
+          topic_category: "General",
+          last_message: lastUserMessage.content,
+        })
+        .select("id,title,topic_category,last_message,created_at,updated_at")
+        .single();
+
+      if (createSessionError || !createdSession) {
+        return NextResponse.json(
+          {
+            success: false,
+            requestId,
+            error: {
+              code: "SESSION_CREATE_FAILED",
+              message: createSessionError?.message ?? "Unable to create a study session.",
+            },
+          },
+          { status: 500 }
+        );
+      }
+
+      session = createdSession;
+    }
+
+    if (session.title === DEFAULT_STUDY_SESSION_TITLE) {
+      const nextTitle = generateStudySessionTitle(lastUserMessage.content);
+      const { error: renameError } = await supabase
+        .from("study_sessions")
+        .update({ title: nextTitle })
+        .eq("id", session.id)
+        .eq("user_id", user.id);
+
+      if (renameError) {
+        return NextResponse.json(
+          {
+            success: false,
+            requestId,
+            error: {
+              code: "SESSION_UPDATE_FAILED",
+              message: renameError.message,
+            },
+          },
+          { status: 500 }
+        );
+      }
+
+      session = {
+        ...session,
+        title: nextTitle,
+      };
+    }
+
+    const { error: userMessageError } = await supabase.from("study_messages").insert({
+      session_id: session.id,
+      user_id: user.id,
+      role: "user",
+      content: lastUserMessage.content,
+    });
+
+    if (userMessageError) {
+      return NextResponse.json(
+        {
+          success: false,
+          requestId,
+          error: {
+            code: "MESSAGE_SAVE_FAILED",
+            message: userMessageError.message,
+          },
+        },
+        { status: 500 }
+      );
+    }
+
     const aiMessage = await getAIResponse(messages);
+
+    const { error: assistantMessageError } = await supabase.from("study_messages").insert({
+      session_id: session.id,
+      user_id: user.id,
+      role: "assistant",
+      content: aiMessage.content,
+    });
+
+    if (assistantMessageError) {
+      return NextResponse.json(
+        {
+          success: false,
+          requestId,
+          error: {
+            code: "MESSAGE_SAVE_FAILED",
+            message: assistantMessageError.message,
+          },
+        },
+        { status: 500 }
+      );
+    }
+
+    const { error: sessionUpdateError } = await supabase
+      .from("study_sessions")
+      .update({ last_message: aiMessage.content })
+      .eq("id", session.id)
+      .eq("user_id", user.id);
+
+    if (sessionUpdateError) {
+      return NextResponse.json(
+        {
+          success: false,
+          requestId,
+          error: {
+            code: "SESSION_UPDATE_FAILED",
+            message: sessionUpdateError.message,
+          },
+        },
+        { status: 500 }
+      );
+    }
+
+    const latestSession = await fetchSessionWithMessages(supabase, session.id, user.id);
+
+    if (!latestSession) {
+      return NextResponse.json(
+        {
+          success: false,
+          requestId,
+          error: {
+            code: "SESSION_FETCH_FAILED",
+            message: "Unable to reload the active study session.",
+          },
+        },
+        { status: 500 }
+      );
+    }
 
     console.info("[chat] response generated", {
       requestId,
@@ -57,6 +248,7 @@ export async function POST(req: Request) {
       requestId,
       data: {
         message: aiMessage,
+        session: latestSession,
       },
     });
   } catch (error) {
