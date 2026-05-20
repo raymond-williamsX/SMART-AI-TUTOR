@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 
 export function LoginForm({ redirectTo = "/dashboard" }: { redirectTo?: string }) {
   const router = useRouter();
-  const { signIn, ready, error: authError } = useAuth();
+  const { signIn, ready, error: authError, signInWithProvider } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,6 +56,20 @@ export function LoginForm({ redirectTo = "/dashboard" }: { redirectTo?: string }
       <Button className="w-full" type="submit" disabled={loading || !ready}>
         {loading ? "Signing in..." : "Continue"}
       </Button>
+      <div className="flex items-center justify-center">
+        <Button variant="ghost" type="button" onClick={async () => {
+          try {
+            setLoading(true);
+            await signInWithProvider?.("google", redirectTo);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+          } finally {
+            setLoading(false);
+          }
+        }}>
+          Sign in with Google
+        </Button>
+      </div>
       <p className="text-center text-sm text-slate-400">
         New to EduAgent AI? <Link href="/signup" className="text-cyan-300 hover:text-cyan-200">Create an account</Link>
       </p>

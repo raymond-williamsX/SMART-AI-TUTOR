@@ -50,7 +50,7 @@ export function Topbar() {
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-300 to-sky-500" />
               <div className="hidden sm:block">
                 <p className="text-sm font-medium text-white">{user.email ?? "Student Admin"}</p>
-                <p className="text-xs text-slate-400">{currentPage?.label ?? "Phase 1 preview"}</p>
+                <p className="text-xs text-slate-400">{currentPage?.label ?? "Personalized tutor"}</p>
               </div>
               <Button variant="outline" size="sm" onClick={handleSignOut} disabled={signingOut} className="border-white/10 bg-white/5 text-slate-200 hover:bg-white/10">
                 {signingOut ? "Signing out..." : "Sign out"}
