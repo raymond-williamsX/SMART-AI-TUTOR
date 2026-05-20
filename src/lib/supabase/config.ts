@@ -1,7 +1,11 @@
 const normalizeUrl = (value: string) => value.replace(/\/$/, "");
 
 export function getSupabaseUrl() {
-  return process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_DATA_API_URL ??
+    process.env.NEXT_PUBLIC_SUPABASE_URL ??
+    ""
+  );
 }
 
 export function getSupabaseKey() {
