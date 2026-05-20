@@ -6,7 +6,7 @@ import { navigationItems } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
-export function Sidebar() {
+export function Sidebar({ collapsed, onToggleCollapsed }: { collapsed?: boolean; onToggleCollapsed?: () => void }) {
   const pathname = usePathname();
 
   return (
