@@ -1,4 +1,3 @@
-export { Topbar } from "./topbar";
 "use client";
 
 import { Bell, Search, Sparkles } from "lucide-react";
