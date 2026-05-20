@@ -5,6 +5,8 @@ R.c("server/chunks/ssr/Desktop_CODE PROJECTS_SMART TUTOR AI_src_components_ui_ca
 R.c("server/chunks/ssr/[root-of-the-server]__0jdw_w9._.js")
 R.c("server/chunks/ssr/[root-of-the-server]__0xrge2k._.js")
 R.c("server/chunks/ssr/[root-of-the-server]__0zoz34p._.js")
+R.c("server/chunks/ssr/Desktop_CODE PROJECTS_SMART TUTOR AI_00r8gd_._.js")
+R.c("server/chunks/ssr/0jvk_next_dist_0e5j4xe._.js")
 R.c("server/chunks/ssr/0jvk_next_dist_client_components_0l4iwmf._.js")
 R.c("server/chunks/ssr/0jvk_next_dist_client_components_builtin_forbidden_0y9wfu3.js")
 R.c("server/chunks/ssr/0jvk_next_dist_client_components_builtin_unauthorized_0wdizyk.js")

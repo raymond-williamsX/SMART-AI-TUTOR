@@ -54,6 +54,12 @@
       "namedRegex": "^/api/health(?:/)?$"
     },
     {
+      "page": "/auth/callback",
+      "regex": "^/auth/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/auth/callback(?:/)?$"
+    },
+    {
       "page": "/chat",
       "regex": "^/chat(?:/)?$",
       "routeKeys": {},

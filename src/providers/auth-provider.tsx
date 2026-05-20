@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import type { Session } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 import { AuthContext, type AuthCredentials, type SignUpCredentials } from "@/context/auth-context";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -22,33 +22,29 @@ export function AuthProvider({ children, initialSession }: { children: ReactNode
 
     let isMounted = true;
 
-    supabase.auth
-      .getSession()
-      .then(({ data, error: sessionError }) => {
-        if (!isMounted) {
-          return;
-        }
+    void (async () => {
+      const { data, error: sessionError } = await supabase.auth.getSession();
 
-        if (sessionError) {
-          console.warn("[auth:provider] session restore failed", {
-            message: sessionError.message,
-          });
-          setError(sessionError.message);
-        }
+      if (!isMounted) {
+        return;
+      }
 
-        console.info("[auth:provider] session restored", {
-          hasSession: Boolean(data.session),
-          userId: data.session?.user?.id,
+      if (sessionError) {
+        console.warn("[auth:provider] session restore failed", {
+          message: sessionError.message,
         });
-        setSession(data.session ?? null);
-      })
-      .finally(() => {
-        if (isMounted) {
-          setLoading(false);
-        }
-      });
+        setError(sessionError.message);
+      }
 
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      console.info("[auth:provider] session restored", {
+        hasSession: Boolean(data.session),
+        userId: data.session?.user?.id,
+      });
+      setSession(data.session ?? null);
+      setLoading(false);
+    })();
+
+    const { data } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, nextSession: Session | null) => {
       if (!isMounted) {
         return;
       }
