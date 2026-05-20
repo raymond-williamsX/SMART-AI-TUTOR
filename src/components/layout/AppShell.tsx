@@ -5,8 +5,8 @@ import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 import { MobileNav } from "./MobileNav";
-import { Sidebar } from "./Sidebar";
-import { Topbar } from "./Topbar";
+import { Sidebar } from "./sidebar";
+import { Topbar } from "./topbar";
 
 export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
   const [collapsed, setCollapsed] = useState(false);

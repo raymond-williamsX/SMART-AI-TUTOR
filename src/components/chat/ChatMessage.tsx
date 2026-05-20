@@ -34,7 +34,7 @@ export function ChatMessage({ message }: { message: MsgType }) {
               {children}
             </a>
           ),
-          code: ({ children, className, inline }) =>
+          code: ({ children, className, inline }: any) =>
             inline ? (
               <code className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-cyan-100">{children}</code>
             ) : (
