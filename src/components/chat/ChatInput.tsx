@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { SendHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 export function ChatInput({ onSend, disabled }: { onSend: (text: string) => void; disabled?: boolean }) {
   const [text, setText] = useState("");
@@ -16,22 +15,27 @@ export function ChatInput({ onSend, disabled }: { onSend: (text: string) => void
   }
 
   return (
-    <div className="flex w-full gap-3">
-      <Input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Ask a question or describe a topic..."
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            submit();
-          }
-        }}
-        disabled={disabled}
-      />
-      <Button onClick={submit} disabled={disabled} size="icon" aria-label="Send message">
-        <SendHorizontal className="h-4 w-4" />
-      </Button>
+    <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-3 shadow-glow">
+      <div className="flex w-full items-end gap-3">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Ask a question or describe a topic..."
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              submit();
+            }
+          }}
+          disabled={disabled}
+          rows={1}
+          className="min-h-[56px] flex-1 resize-none rounded-[1.5rem] border border-white/10 bg-slate-950/50 px-4 py-4 text-sm text-foreground placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
+        />
+        <Button onClick={submit} disabled={disabled} size="icon" aria-label="Send message" className="h-14 w-14 shrink-0 rounded-[1.5rem]">
+          <SendHorizontal className="h-4 w-4" />
+        </Button>
+      </div>
+      <p className="mt-2 px-1 text-xs text-slate-400">Press Enter to send, Shift + Enter for a new line.</p>
     </div>
   );
 }

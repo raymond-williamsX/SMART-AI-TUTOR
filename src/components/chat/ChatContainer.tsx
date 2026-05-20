@@ -145,10 +145,15 @@ export function ChatContainer() {
     }
   };
 
+  const starterPrompts = [
+    "Explain photosynthesis like I'm 12.",
+    "Compare mitosis and meiosis with a simple table.",
+    "Make me a 7-day study plan for algebra.",
+  ];
+
   return (
-    <div className="flex h-full max-h-[70vh] w-full flex-col gap-4">
-      {/* Messages Display */}
-      <div className="scrollbar-hide flex-1 overflow-y-auto rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-6">
+    <div className="flex h-full min-h-[calc(100dvh-20rem)] w-full flex-col gap-4">
+      <div className="scrollbar-hide flex-1 overflow-y-auto rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
         <div className="flex flex-col gap-4">
           {messages.map((msg) => (
             <ChatMessageComponent key={msg.id} message={msg} />
@@ -156,9 +161,23 @@ export function ChatContainer() {
 
           {/* Empty state: show hint only if we're still at welcome message */}
           {messages.length === 1 && !loading ? (
-            <div className="mt-8 rounded-lg border border-dashed border-slate-400/30 bg-slate-400/5 p-4 text-center text-sm text-slate-400">
-              <p className="mb-2 font-medium">Ready to help! 🎓</p>
-              <p>Try asking: <span className="italic text-slate-300">"Explain quantum computing"</span> or <span className="italic text-slate-300">"How do I write a function in Python?"</span></p>
+            <div className="mt-6 rounded-[1.75rem] border border-dashed border-slate-400/25 bg-slate-400/5 p-4 text-sm text-slate-400">
+              <p className="mb-2 font-medium text-slate-200">Ready to help.</p>
+              <p className="mb-4 leading-7 text-slate-400">
+                Try a starter prompt or ask your own question. The tutor will answer with structured, step-by-step guidance.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {starterPrompts.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => handleSend(prompt)}
+                    className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-slate-200 transition-colors hover:bg-white/[0.08]"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : null}
 
@@ -171,8 +190,8 @@ export function ChatContainer() {
 
           {/* Error Alert */}
           {error ? (
-            <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
-              <span className="font-semibold">⚠️ Error:</span> {error}
+            <div className="rounded-[1.5rem] border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-100">
+              <span className="font-semibold">Error:</span> {error}
             </div>
           ) : null}
 
@@ -182,7 +201,7 @@ export function ChatContainer() {
       </div>
 
       {/* Input Area */}
-      <div className="w-full">
+      <div className="w-full pb-1">
         <ChatInput onSend={handleSend} disabled={loading} />
       </div>
     </div>

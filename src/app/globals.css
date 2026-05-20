@@ -43,6 +43,47 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
+body {
+  overflow-x: hidden;
+}
+
+textarea {
+  font: inherit;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.markdown-content pre,
+.markdown-content code {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Consolas, Liberation Mono, Menlo, monospace;
+}
+
+.markdown-content pre code {
+  display: block;
+  white-space: pre;
+}
+
+.markdown-content table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+}
+
 ::selection {
   background: rgba(45, 212, 191, 0.28);
   color: white;
