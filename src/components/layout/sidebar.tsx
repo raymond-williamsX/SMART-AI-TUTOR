@@ -1,5 +1,3 @@
-export { Sidebar } from "./Sidebar";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sparkles } from "lucide-react";

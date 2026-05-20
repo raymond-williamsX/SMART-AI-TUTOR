@@ -1,0 +1,50 @@
+{
+  "pages": {
+    "/_app": [
+      "static/chunks/0jvk_next_dist_compiled_0cfq8py._.js",
+      "static/chunks/0jvk_next_dist_shared_lib_0lq2aaf._.js",
+      "static/chunks/0jvk_next_dist_client_06v1dmk._.js",
+      "static/chunks/0jvk_next_dist_11rrx-f._.js",
+      "static/chunks/0jvk_next_app_111kntc.js",
+      "static/chunks/[next]_entry_page-loader_ts_0oebol2._.js",
+      "static/chunks/0jvk_react-dom_0m7szbq._.js",
+      "static/chunks/0jvk_0bqodk-._.js",
+      "static/chunks/[root-of-the-server]__0xvtin7._.js",
+      "static/chunks/Desktop_CODE PROJECTS_SMART TUTOR AI_pages__app_07xvfw~._.js",
+      "static/chunks/turbopack-Desktop_CODE PROJECTS_SMART TUTOR AI_pages__app_0qfo~4h._.js"
+    ],
+    "/_error": [
+      "static/chunks/0jvk_next_dist_compiled_0cfq8py._.js",
+      "static/chunks/0jvk_next_dist_shared_lib_02h4j27._.js",
+      "static/chunks/0jvk_next_dist_client_06v1dmk._.js",
+      "static/chunks/0jvk_next_dist_0z_-1b0._.js",
+      "static/chunks/[next]_entry_page-loader_ts_0jhlyh-._.js",
+      "static/chunks/0jvk_react-dom_0m7szbq._.js",
+      "static/chunks/0jvk_0bqodk-._.js",
+      "static/chunks/[root-of-the-server]__13tajyr._.js",
+      "static/chunks/Desktop_CODE PROJECTS_SMART TUTOR AI_pages__error_07xvfw~._.js",
+      "static/chunks/turbopack-Desktop_CODE PROJECTS_SMART TUTOR AI_pages__error_0k1fg7h._.js"
+    ]
+  },
+  "devFiles": [],
+  "polyfillFiles": [
+    "static/chunks/0jvk_next_dist_build_polyfills_polyfill-nomodule.js"
+  ],
+  "lowPriorityFiles": [
+    "static/development/_buildManifest.js",
+    "static/development/_ssgManifest.js",
+    "static/development/_clientMiddlewareManifest.js"
+  ],
+  "rootMainFiles": [
+    "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_0a6vymi._.js",
+    "static/chunks/0jvk_next_dist_compiled_next-devtools_index_0042bqk.js",
+    "static/chunks/0jvk_next_dist_compiled_react-dom_0tw1m~.._.js",
+    "static/chunks/0jvk_next_dist_compiled_react-server-dom-turbopack_0opqiz5._.js",
+    "static/chunks/0jvk_next_dist_compiled_0jwzksi._.js",
+    "static/chunks/0jvk_next_dist_client_07-xkf8._.js",
+    "static/chunks/0jvk_next_dist_09--ows._.js",
+    "static/chunks/0jvk_@swc_helpers_cjs_0-tcovv._.js",
+    "static/chunks/Desktop_CODE PROJECTS_SMART TUTOR AI_0rqeker._.js",
+    "static/chunks/turbopack-Desktop_CODE PROJECTS_SMART TUTOR AI_0hxuqsl._.js"
+  ]
+}
