@@ -4,8 +4,6 @@ import { Bell, Search, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-
-import { MobileNav } from "./MobileNav";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,7 +32,6 @@ export function Topbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
       <div className="flex items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
-        <MobileNav />
         <div className="relative hidden flex-1 md:block">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input placeholder="Search lessons, students, uploads..." className="pl-11" />
