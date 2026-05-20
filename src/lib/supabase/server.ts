@@ -2,9 +2,16 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 
-export async function createSupabaseServerClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+import { getSupabaseKey, getSupabaseUrl } from "@/lib/supabase/config";
+
+export type SupabaseCookieStore = {
+  getAll: () => Array<{ name: string; value: string }>;
+  setAll: (cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) => void;
+};
+
+export async function createSupabaseServerClient(cookieStore?: SupabaseCookieStore) {
+  const supabaseUrl = getSupabaseUrl();
+  const supabaseAnonKey = getSupabaseKey();
 
   if (!supabaseUrl || !supabaseAnonKey) {
     return {
@@ -21,39 +28,34 @@ export async function createSupabaseServerClient() {
     } as any;
   }
 
-  const cookieStore = await cookies();
+  const nextHeadersCookieStore = await cookies();
+  const resolvedCookieStore =
+    cookieStore ??
+    {
+      getAll() {
+        return nextHeadersCookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          nextHeadersCookieStore.set({
+            name,
+            value,
+            ...options,
+          });
+        });
+      },
+    };
 
   return createServerClient(
     supabaseUrl,
     supabaseAnonKey,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+        getAll() {
+          return resolvedCookieStore.getAll();
         },
-
-        set(
-          name: string,
-          value: string,
-          options: CookieOptions
-        ) {
-          cookieStore.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-
-        remove(
-          name: string,
-          options: CookieOptions
-        ) {
-          cookieStore.set({
-            name,
-            value: "",
-            ...options,
-            maxAge: 0,
-          });
+        setAll(cookiesToSet) {
+          resolvedCookieStore.setAll(cookiesToSet);
         },
       },
     }

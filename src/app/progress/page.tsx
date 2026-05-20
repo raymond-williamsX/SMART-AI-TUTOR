@@ -4,6 +4,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/require-user";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProgressPage() {
   await requireUser("/progress");
 

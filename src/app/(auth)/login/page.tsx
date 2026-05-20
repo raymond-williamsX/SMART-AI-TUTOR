@@ -6,16 +6,18 @@ export default function LoginPage({
 }: Readonly<{
   searchParams?: {
     redirectTo?: string;
+    error?: string;
   };
 }>) {
   const redirectTo = searchParams?.redirectTo ?? "/dashboard";
+  const initialErrorMessage = searchParams?.error;
 
   return (
     <AuthShell
       title="Welcome back"
       description="Sign in to continue your tutoring workspace, review lessons, and prepare for future AI study sessions."
     >
-      <LoginForm redirectTo={redirectTo} />
+      <LoginForm redirectTo={redirectTo} initialErrorMessage={initialErrorMessage} />
     </AuthShell>
   );
 }
