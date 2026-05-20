@@ -101,6 +101,13 @@ create policy "uploaded_materials_delete_own" on public.uploaded_materials
   to authenticated
   using ((select auth.uid()) = user_id);
 
+grant select, insert, update, delete on table public.study_sessions to authenticated;
+grant select, insert, update, delete on table public.study_messages to authenticated;
+grant select, insert, update, delete on table public.uploaded_materials to authenticated;
+grant select, insert, update, delete on table public.study_sessions to service_role;
+grant select, insert, update, delete on table public.study_messages to service_role;
+grant select, insert, update, delete on table public.uploaded_materials to service_role;
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
