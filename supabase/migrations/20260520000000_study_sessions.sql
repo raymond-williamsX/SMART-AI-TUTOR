@@ -115,3 +115,61 @@ create trigger study_sessions_set_updated_at
 before update on public.study_sessions
 for each row
 execute function public.set_updated_at();
+
+create or replace function public.touch_session_updated_at_from_materials()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'DELETE' then
+    update public.study_sessions
+    set updated_at = now()
+    where id = old.session_id;
+    return old;
+  end if;
+
+  update public.study_sessions
+  set updated_at = now()
+  where id = new.session_id;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists uploaded_materials_touch_session on public.uploaded_materials;
+create trigger uploaded_materials_touch_session
+after insert or update or delete on public.uploaded_materials
+for each row
+execute function public.touch_session_updated_at_from_materials();
+
+insert into storage.buckets (id, name, public)
+values ('uploaded-materials', 'uploaded-materials', false)
+on conflict (id) do update
+set name = excluded.name,
+    public = excluded.public;
+
+drop policy if exists "uploaded_materials_select_own_objects" on storage.objects;
+drop policy if exists "uploaded_materials_insert_own_objects" on storage.objects;
+drop policy if exists "uploaded_materials_update_own_objects" on storage.objects;
+drop policy if exists "uploaded_materials_delete_own_objects" on storage.objects;
+
+create policy "uploaded_materials_select_own_objects" on storage.objects
+  for select
+  to authenticated
+  using (bucket_id = 'uploaded-materials' and owner = auth.uid());
+
+create policy "uploaded_materials_insert_own_objects" on storage.objects
+  for insert
+  to authenticated
+  with check (bucket_id = 'uploaded-materials' and owner = auth.uid());
+
+create policy "uploaded_materials_update_own_objects" on storage.objects
+  for update
+  to authenticated
+  using (bucket_id = 'uploaded-materials' and owner = auth.uid())
+  with check (bucket_id = 'uploaded-materials' and owner = auth.uid());
+
+create policy "uploaded_materials_delete_own_objects" on storage.objects
+  for delete
+  to authenticated
+  using (bucket_id = 'uploaded-materials' and owner = auth.uid());
