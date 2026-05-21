@@ -26,7 +26,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${headingFont.variable} ${bodyFont.variable} bg-background font-body text-foreground antialiased`}>
+      <body className={`${headingFont.variable} ${bodyFont.variable} h-full overflow-hidden bg-background font-body text-foreground antialiased`}>
         <Providers initialSession={data.session}>{children}</Providers>
       </body>
     </html>

@@ -23,7 +23,6 @@ export function Topbar() {
       setSigningOut(true);
       await signOut();
       router.push("/login");
-      router.refresh();
     } finally {
       setSigningOut(false);
     }

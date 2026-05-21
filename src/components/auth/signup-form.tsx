@@ -44,7 +44,6 @@ export function SignupForm({ redirectTo = "/dashboard", initialErrorMessage }: {
       }
 
       router.push(redirectTo);
-      router.refresh();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unable to create your account right now.");
     } finally {

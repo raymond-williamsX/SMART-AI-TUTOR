@@ -29,7 +29,6 @@ export function LoginForm({ redirectTo = "/dashboard", initialErrorMessage }: { 
       setError(null);
       await signIn({ email: email.trim(), password });
       router.push(redirectTo);
-      router.refresh();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unable to sign in right now.");
     } finally {
