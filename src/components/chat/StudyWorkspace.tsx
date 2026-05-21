@@ -490,83 +490,61 @@ export function StudyWorkspace() {
 
   const showLoadingShell = (!ready || authLoading || loadingSessions) && sessions.length === 0;
   const hasMessages = activeMessages.length > 0;
+  const sessionMessageCount = Array.isArray(activeSession?.messages) ? activeSession.messages.length : 0;
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden">
-      <div className="flex items-center justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-3 shadow-glow lg:hidden">
-        <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study sessions</p>
-          <p className="mt-1 truncate text-sm text-slate-100">{activeSession?.title ?? "Start a session"}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="ghost" size="icon" onClick={() => setMobileSessionsOpen((current) => !current)} aria-label="Toggle sessions">
-            <Menu className="h-4 w-4" />
-          </Button>
-          <Button type="button" size="icon" onClick={handleNewSession} aria-label="New session" disabled={sending || loadingSessions || authLoading}>
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] shadow-glow">
-        <div className="flex flex-none flex-col gap-3 border-b border-white/10 p-4 sm:p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study room</p>
-              <h1 className="mt-2 truncate text-2xl font-semibold text-white sm:text-3xl">
-                {activeSession?.title ?? "Create your first study session"}
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-                Your questions, answers, and session history are stored in Supabase so you can pick up where you left off on any device.
-              </p>
-            </div>
-            <div className="text-sm text-slate-400">
-              {showLoadingShell ? (
-                <div className="flex items-center gap-2 text-slate-300">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading sessions...
-                </div>
-              ) : activeSession ? (
-                <>
-                  <div>{Array.isArray(activeSession.messages) ? activeSession.messages.length : 0} saved messages</div>
-                  <div className="mt-1">Updated {new Date(safeTimestamp(activeSession.updatedAt)).toLocaleString()}</div>
-                </>
-              ) : (
-                <div>No session selected</div>
-              )}
-            </div>
+    <div className="flex h-full min-h-0 w-full flex-col gap-2 overflow-hidden">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.5rem] border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.015] shadow-glow">
+        <div className="flex flex-none items-center gap-2 border-b border-white/10 px-3 py-2 sm:px-4">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-100">{activeSession?.title ?? "New chat"}</p>
+            <p className="mt-0.5 text-xs text-slate-400">
+              {showLoadingShell
+                ? "Loading sessions..."
+                : activeSession
+                  ? `${sessionMessageCount} messages • Updated ${new Date(safeTimestamp(activeSession.updatedAt)).toLocaleDateString()}`
+                  : "Create a session to begin"}
+            </p>
           </div>
-
-          {error ? (
-            <div className="rounded-[1.5rem] border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-100">{error}</div>
-          ) : null}
+          <div className="flex items-center gap-1">
+            <Button type="button" variant="ghost" size="icon" onClick={() => setMobileSessionsOpen((current) => !current)} aria-label="Toggle sessions" className="h-9 w-9 lg:hidden">
+              <Menu className="h-4 w-4" />
+            </Button>
+            <Button type="button" size="icon" onClick={handleNewSession} aria-label="New session" disabled={sending || loadingSessions || authLoading} className="h-9 w-9">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
+
+        {error ? (
+          <div className="mx-3 mt-2 rounded-xl border border-red-500/20 bg-red-500/10 p-2 text-xs text-red-100 sm:mx-4">{error}</div>
+        ) : null}
 
         <div className="flex min-h-0 flex-1 overflow-hidden">
-          <aside className="hidden w-[19rem] shrink-0 flex-col border-r border-white/10 bg-white/[0.02] p-4 lg:flex">
+          <aside className="hidden w-[16.5rem] shrink-0 flex-col border-r border-white/10 bg-white/[0.015] p-3 lg:flex">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study sessions</p>
-                <h2 className="mt-2 text-lg font-semibold text-white">Resumable workspace</h2>
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Study sessions</p>
+                <h2 className="mt-1 text-sm font-semibold text-white">Recent chats</h2>
               </div>
-              <Button type="button" size="icon" onClick={handleNewSession} aria-label="New session" disabled={sending || loadingSessions || authLoading}>
+              <Button type="button" size="icon" onClick={handleNewSession} aria-label="New session" disabled={sending || loadingSessions || authLoading} className="h-9 w-9">
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
 
-            <div className="mt-4 flex items-center gap-2 rounded-[1.25rem] border border-white/10 bg-slate-950/40 px-3 py-2">
-              <Search className="h-4 w-4 text-slate-400" />
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/40 px-2.5 py-2">
+              <Search className="h-3.5 w-3.5 text-slate-400" />
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search sessions"
-                className="border-0 bg-transparent px-0 text-sm text-slate-100 placeholder:text-slate-500 focus-visible:ring-0"
+                className="border-0 bg-transparent px-0 text-xs text-slate-100 placeholder:text-slate-500 focus-visible:ring-0"
               />
             </div>
 
-            <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+            <div className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
               {loadingSessions && sessions.length === 0 ? (
-                <div className="rounded-[1.25rem] border border-dashed border-white/10 p-4 text-sm text-slate-400">Loading sessions...</div>
+                <div className="rounded-xl border border-dashed border-white/10 p-3 text-xs text-slate-400">Loading sessions...</div>
               ) : filteredSessions.length > 0 ? (
                 filteredSessions.map((session) => (
                   <button
@@ -577,7 +555,7 @@ export function StudyWorkspace() {
                       setMobileSessionsOpen(false);
                       shouldAutoScrollRef.current = true;
                     }}
-                    className={`w-full rounded-[1.5rem] border px-3 py-3 text-left transition-colors ${
+                    className={`w-full rounded-xl border px-2.5 py-2.5 text-left transition-colors ${
                       session.id === activeSessionId
                         ? "border-cyan-300/25 bg-cyan-400/10"
                         : "border-white/8 bg-white/[0.02] hover:bg-white/[0.05]"
@@ -585,15 +563,15 @@ export function StudyWorkspace() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-100">{session.title}</p>
-                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{getPreview(session)}</p>
+                        <p className="truncate text-xs font-semibold text-slate-100">{session.title}</p>
+                        <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-400">{getPreview(session)}</p>
                       </div>
-                      <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                      <Clock3 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
                     </div>
                   </button>
                 ))
               ) : (
-                <div className="rounded-[1.25rem] border border-dashed border-white/10 p-4 text-sm text-slate-400">
+                <div className="rounded-xl border border-dashed border-white/10 p-3 text-xs text-slate-400">
                   No sessions yet. Create one to begin.
                 </div>
               )}
@@ -601,19 +579,19 @@ export function StudyWorkspace() {
           </aside>
 
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="flex min-h-0 flex-1 overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.03]">
+            <div className="flex min-h-0 flex-1 overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
               <ChatErrorBoundary
                 resetKey={activeSessionId ?? "no-session"}
                 fallback={(boundaryError, reset) => <MessageViewportFallback error={boundaryError} reset={reset} />}
               >
-                <div ref={messagesScrollRef} className="scrollbar-hide flex h-full min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-6">
+                <div ref={messagesScrollRef} className="scrollbar-hide flex h-full min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4 sm:py-4">
                   {showLoadingShell ? (
-                    <div className="rounded-[1.75rem] border border-dashed border-slate-400/25 bg-slate-400/5 p-4 text-sm text-slate-400">
+                    <div className="rounded-xl border border-dashed border-slate-400/25 bg-slate-400/5 p-3 text-xs text-slate-400">
                       <div className="flex items-center gap-2 text-slate-200">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         Preparing your workspace...
                       </div>
-                      <p className="mt-2 leading-7 text-slate-400">We are restoring your sessions and chat history.</p>
+                      <p className="mt-1.5 leading-5 text-slate-400">We are restoring your sessions and chat history.</p>
                     </div>
                   ) : null}
 
@@ -622,9 +600,9 @@ export function StudyWorkspace() {
                     : null}
 
                   {!showLoadingShell && (!activeSession || activeSession.messages.length === 0) ? (
-                    <div className="mt-2 rounded-[1.75rem] border border-dashed border-slate-400/25 bg-slate-400/5 p-4 text-sm text-slate-400">
-                      <p className="mb-2 font-medium text-slate-200">Ready to help.</p>
-                      <p className="mb-4 leading-7 text-slate-400">
+                    <div className="mt-1 rounded-xl border border-dashed border-slate-400/25 bg-slate-400/5 p-3 text-xs text-slate-400">
+                      <p className="mb-1.5 text-sm font-medium text-slate-200">Ready to help.</p>
+                      <p className="mb-3 leading-5 text-slate-400">
                         Try a starter prompt or ask your own question. The tutor will answer with structured, step-by-step guidance.
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -633,7 +611,7 @@ export function StudyWorkspace() {
                             key={prompt}
                             type="button"
                             onClick={() => handleSend(prompt)}
-                            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-slate-200 transition-colors hover:bg-white/[0.08]"
+                            className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-slate-200 transition-colors hover:bg-white/[0.08]"
                           >
                             {prompt}
                           </button>
@@ -653,7 +631,7 @@ export function StudyWorkspace() {
               </ChatErrorBoundary>
             </div>
 
-            <div className="flex-none border-t border-white/10 bg-slate-950/35 p-3">
+            <div className="flex-none border-t border-white/10 bg-slate-950/35 p-2.5">
               <ChatInput onSend={handleSend} disabled={sending || loadingSessions || authLoading || !ready} />
             </div>
           </div>
@@ -665,14 +643,14 @@ export function StudyWorkspace() {
           <div className="mx-auto flex h-full w-full max-w-md flex-col rounded-[2rem] border border-white/10 bg-slate-950 p-4 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study sessions</p>
-                <h2 className="mt-2 text-lg font-semibold text-white">Session history</h2>
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Study sessions</p>
+                <h2 className="mt-1 text-base font-semibold text-white">Session history</h2>
               </div>
               <div className="flex items-center gap-2">
-                <Button type="button" size="icon" onClick={handleNewSession} aria-label="New session" disabled={sending || loadingSessions || authLoading}>
+                <Button type="button" size="icon" onClick={handleNewSession} aria-label="New session" disabled={sending || loadingSessions || authLoading} className="h-9 w-9">
                   <Plus className="h-4 w-4" />
                 </Button>
-                <Button type="button" variant="ghost" size="icon" onClick={() => setMobileSessionsOpen(false)} aria-label="Close sessions">
+                <Button type="button" variant="ghost" size="icon" onClick={() => setMobileSessionsOpen(false)} aria-label="Close sessions" className="h-9 w-9">
                   <Menu className="h-4 w-4" />
                 </Button>
               </div>
