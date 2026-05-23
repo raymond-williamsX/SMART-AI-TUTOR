@@ -1,5 +1,7 @@
 SMART-TUTOR-AI-2026-May-18--11_26_23.csv
 credentials-2deed2-2026-May-18--10_55_06.csv
+build-output*.txt
+elastic*.csv
 .env
 node_modules
 .env2
