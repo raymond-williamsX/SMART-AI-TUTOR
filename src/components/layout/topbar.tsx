@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Search, Sparkles } from "lucide-react";
+import { Bell, Menu, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { navigationItems } from "@/lib/navigation";
 import { useAuth } from "@/hooks/use-auth";
 
-export function Topbar() {
+export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
   const currentPage = navigationItems.find((item) => item.href === pathname);
@@ -32,6 +32,16 @@ export function Topbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
       <div className="flex items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={onMenuClick}
+          className="border-white/10 bg-white/5 text-slate-200 hover:bg-white/10 lg:hidden"
+          aria-label="Open navigation"
+        >
+          <Menu className="h-4 w-4" />
+        </Button>
         <div className="relative hidden flex-1 md:block">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input placeholder="Search lessons, students, uploads..." className="pl-11" />

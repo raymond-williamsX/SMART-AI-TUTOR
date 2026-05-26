@@ -340,7 +340,7 @@ export function StudyWorkspace() {
   }
 
   return (
-    <div className="relative flex min-h-[calc(100dvh-7rem)] w-full flex-col gap-4 lg:flex-row">
+    <div className="relative flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden lg:flex-row">
       <div className="flex shrink-0 items-center justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-3 shadow-glow lg:hidden">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study sessions</p>
@@ -479,7 +479,7 @@ export function StudyWorkspace() {
         </div>
       ) : null}
 
-      <section className="relative flex min-h-[calc(100dvh-12rem)] min-w-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
+      <section className="relative flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
         <div className="flex shrink-0 flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study room</p>
@@ -558,7 +558,7 @@ export function StudyWorkspace() {
           ) : null}
         </AnimatePresence>
 
-        <div className="sticky bottom-0 z-20 w-full rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl">
+        <div className="z-20 w-full shrink-0 rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl">
           <ChatInput onSend={handleSend} disabled={sending || loadingSessions || authLoading || !ready} />
         </div>
       </section>
