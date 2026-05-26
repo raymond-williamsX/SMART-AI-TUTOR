@@ -25,8 +25,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const { data } = await supabase.auth.getSession();
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${headingFont.variable} ${bodyFont.variable} h-full overflow-hidden bg-background font-body text-foreground antialiased`}>
+    <html lang="en" suppressHydrationWarning className="h-full">
+      <body className={`${headingFont.variable} ${bodyFont.variable} min-h-screen overflow-x-hidden bg-background font-body text-foreground antialiased`}>
         <Providers initialSession={data.session}>{children}</Providers>
       </body>
     </html>

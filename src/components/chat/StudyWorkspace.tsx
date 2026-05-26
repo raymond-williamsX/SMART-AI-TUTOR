@@ -103,7 +103,6 @@ export function StudyWorkspace() {
   const activeMessages = useMemo(() => sessionToMessages(activeSession), [activeSession]);
   const showLoadingShell = (loadingSessions || (!ready && !user)) && sessions.length === 0;
   const hasMessages = activeMessages.length > 0;
-  const sessionMessageCount = activeSession?.messages.length ?? 0;
   const showSessionListLoading = loadingSessions && sessions.length === 0;
 
   const filteredSessions = useMemo(() => {
@@ -320,7 +319,7 @@ export function StudyWorkspace() {
   }
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col gap-4 lg:flex-row">
+    <div className="relative flex min-h-[calc(100dvh-7rem)] w-full flex-col gap-4 lg:flex-row">
       <div className="flex shrink-0 items-center justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-3 shadow-glow lg:hidden">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study sessions</p>
@@ -444,29 +443,14 @@ export function StudyWorkspace() {
         </div>
       ) : null}
 
-      <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
-        <div className="flex shrink-0 flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-end sm:justify-between">
+      <section className="flex min-h-[calc(100dvh-12rem)] min-w-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
+        <div className="flex shrink-0 flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study room</p>
-            <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">{activeSession?.title ?? "Create your first study session"}</h1>
+            <h1 className="mt-2 text-xl font-semibold text-white sm:text-2xl">{activeSession?.title ?? "Create your first study session"}</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-              Your questions, answers, and session history are stored in Supabase so you can pick up where you left off on any device.
+              Ask a question, upload material, or continue a previous conversation. The transcript stays readable, spacious, and easy to scroll on mobile.
             </p>
-          </div>
-          <div className="text-sm text-slate-400">
-            {showLoadingShell ? (
-              <>
-                <div className="h-4 w-28 animate-pulse rounded-full bg-white/10" />
-                <div className="mt-2 h-4 w-36 animate-pulse rounded-full bg-white/10" />
-              </>
-            ) : activeSession ? (
-              <>
-                <div>{sessionMessageCount} saved messages</div>
-                <div className="mt-1">Updated {new Date(activeSession.updatedAt).toLocaleString()}</div>
-              </>
-            ) : (
-              <div>No session selected</div>
-            )}
           </div>
         </div>
 
@@ -517,7 +501,7 @@ export function StudyWorkspace() {
           </div>
         </div>
 
-        <div className="shrink-0 w-full pb-1">
+        <div className="shrink-0 w-full rounded-[1.75rem] border border-white/10 bg-slate-950/70 p-3 backdrop-blur-xl">
           <ChatInput onSend={handleSend} disabled={sending || loadingSessions || authLoading || !ready} />
         </div>
       </section>
