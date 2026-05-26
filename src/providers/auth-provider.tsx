@@ -121,6 +121,8 @@ export function AuthProvider({ children, initialSession }: { children: ReactNode
       if (signOutError) {
         throw signOutError;
       }
+
+      setSession(null);
     },
     signInWithProvider: async (provider: string, redirectTo?: string) => {
       if (!supabase) {

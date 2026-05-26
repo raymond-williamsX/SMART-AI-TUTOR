@@ -330,8 +330,8 @@ export function UploadWorkspace() {
   }
 
   return (
-    <div className="flex min-h-[calc(100dvh-20rem)] w-full flex-col gap-4 lg:flex-row">
-      <aside className="hidden w-[20rem] shrink-0 flex-col rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 shadow-glow lg:flex">
+    <div className="flex h-full min-h-0 w-full flex-col gap-4 lg:flex-row">
+      <aside className="hidden h-full min-h-0 w-[20rem] shrink-0 flex-col rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 shadow-glow lg:flex">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Materials</p>
@@ -347,7 +347,7 @@ export function UploadWorkspace() {
           <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search sessions" className="border-0 bg-transparent px-0 text-sm text-slate-100 placeholder:text-slate-500 focus-visible:ring-0" />
         </div>
 
-        <div className="mt-4 flex-1 space-y-2 overflow-y-auto pr-1">
+        <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
           {loadingSessions ? (
             <div className="rounded-[1.25rem] border border-dashed border-white/10 p-4 text-sm text-slate-400">Loading sessions...</div>
           ) : filteredSessions.length > 0 ? (
@@ -370,8 +370,8 @@ export function UploadWorkspace() {
         </div>
       </aside>
 
-      <section className="flex min-w-0 flex-1 flex-col gap-4 rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
-        <div className="flex flex-col gap-4 border-b border-white/10 pb-4 sm:flex-row sm:items-end sm:justify-between">
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
+        <div className="flex shrink-0 flex-col gap-4 border-b border-white/10 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Upload workspace</p>
             <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">Store files inside your study sessions</h1>
@@ -447,7 +447,7 @@ export function UploadWorkspace() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid min-h-0 gap-4 xl:grid-cols-[1.15fr_0.85fr]">
           <Card className="border-white/10 bg-white/[0.03]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
