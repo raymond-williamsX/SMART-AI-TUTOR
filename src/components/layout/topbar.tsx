@@ -23,6 +23,10 @@ export function Topbar() {
       setSigningOut(true);
       await signOut();
       router.push("/login");
+<<<<<<< HEAD
+=======
+      router.refresh();
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
     } finally {
       setSigningOut(false);
     }

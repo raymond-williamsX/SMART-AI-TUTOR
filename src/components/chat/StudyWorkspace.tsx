@@ -1,18 +1,29 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+<<<<<<< HEAD
 import { AlertTriangle, Clock3, Loader2, Menu, Plus, RefreshCcw, Search } from "lucide-react";
 
 import { ChatInput } from "./ChatInput";
 import { ChatMessage as ChatMessageComponent } from "./ChatMessage";
 import { ChatErrorBoundary } from "./chat-error-boundary";
+=======
+import { Clock3, Menu, Plus, Search } from "lucide-react";
+
+import { ChatInput } from "./ChatInput";
+import { ChatMessage as ChatMessageComponent } from "./ChatMessage";
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
 import { TypingIndicator } from "./TypingIndicator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import type { ChatMessage } from "@/lib/chat/types";
 import { DEFAULT_STUDY_SESSION_TITLE } from "@/lib/study-sessions/title";
+<<<<<<< HEAD
 import type { StudyMessageRole, StudySessionRecord } from "@/lib/study-sessions/types";
+=======
+import type { StudySessionRecord } from "@/lib/study-sessions/types";
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
 
 type ApiErrorResponse = {
   code: string;
@@ -61,6 +72,7 @@ const starterPrompts = [
   "Make me a 7-day study plan for algebra.",
 ];
 
+<<<<<<< HEAD
 function safeString(value: unknown, fallback = "") {
   return typeof value === "string" ? value : fallback;
 }
@@ -164,6 +176,35 @@ function MessageViewportFallback({ error, reset }: { error: Error; reset: () => 
 
 export function StudyWorkspace() {
   const { user, ready, loading: authLoading } = useAuth();
+=======
+function sortSessions(sessions: StudySessionRecord[]) {
+  return [...sessions].sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+}
+
+function toChatMessage(message: StudySessionRecord["messages"][number]): ChatMessage {
+  return {
+    id: message.id,
+    role: message.role,
+    content: message.content,
+    timestamp: new Date(message.createdAt).getTime(),
+  };
+}
+
+function sessionToMessages(session: StudySessionRecord | undefined): ChatMessage[] {
+  if (!session || session.messages.length === 0) {
+    return [WELCOME_MESSAGE];
+  }
+
+  return session.messages.map(toChatMessage);
+}
+
+function getPreview(session: StudySessionRecord) {
+  return session.lastMessage.trim() || "No messages yet";
+}
+
+export function StudyWorkspace() {
+  const { user, ready } = useAuth();
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
   const [sessions, setSessions] = useState<StudySessionRecord[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -172,16 +213,22 @@ export function StudyWorkspace() {
   const [error, setError] = useState<string | null>(null);
   const [mobileSessionsOpen, setMobileSessionsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+<<<<<<< HEAD
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
+=======
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
 
   const activeSession = useMemo(
     () => sessions.find((session) => session.id === activeSessionId) ?? null,
     [activeSessionId, sessions]
   );
 
+<<<<<<< HEAD
   const activeMessages = useMemo(() => sessionToMessages(activeSession), [activeSession]);
 
+=======
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
   const filteredSessions = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
@@ -191,11 +238,16 @@ export function StudyWorkspace() {
 
     return sessions.filter((session) => {
       return [session.title, session.topicCategory, session.lastMessage].some((value) =>
+<<<<<<< HEAD
         safeString(value).toLowerCase().includes(normalizedQuery)
+=======
+        value.toLowerCase().includes(normalizedQuery)
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
       );
     });
   }, [query, sessions]);
 
+<<<<<<< HEAD
   useEffect(() => {
     shouldAutoScrollRef.current = true;
   }, [activeSessionId]);
@@ -234,6 +286,16 @@ export function StudyWorkspace() {
     if (!user) {
       setSessions([]);
       setActiveSessionId(null);
+=======
+  const activeMessages = useMemo(() => sessionToMessages(activeSession ?? undefined), [activeSession]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [activeMessages.length, sending, activeSessionId]);
+
+  useEffect(() => {
+    if (!ready || !user) {
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
       setLoadingSessions(false);
       return;
     }
@@ -262,8 +324,12 @@ export function StudyWorkspace() {
           throw new Error(payload.error?.message || "Unable to load study sessions.");
         }
 
+<<<<<<< HEAD
         const nextSessions = sortSessions((payload.data?.sessions ?? []).map(normalizeSession).filter(Boolean) as StudySessionRecord[]);
 
+=======
+        const nextSessions = sortSessions(payload.data?.sessions ?? []);
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
         setSessions(nextSessions);
         setActiveSessionId((current) => {
           if (current && nextSessions.some((session) => session.id === current)) {
@@ -289,6 +355,7 @@ export function StudyWorkspace() {
     return () => {
       isMounted = false;
     };
+<<<<<<< HEAD
   }, [authLoading, ready, user]);
 
   useEffect(() => {
@@ -358,6 +425,43 @@ export function StudyWorkspace() {
     });
 
     shouldAutoScrollRef.current = true;
+=======
+  }, [ready, user]);
+
+  function mergeSession(session: StudySessionRecord) {
+    setSessions((current) => {
+      const withoutCurrent = current.filter((item) => item.id !== session.id);
+      return sortSessions([session, ...withoutCurrent]);
+    });
+    setActiveSessionId(session.id);
+  }
+
+  function appendMessage(sessionId: string, message: ChatMessage) {
+    setSessions((current) =>
+      sortSessions(
+        current.map((session) => {
+          if (session.id !== sessionId) {
+            return session;
+          }
+
+          return {
+            ...session,
+            lastMessage: message.content,
+            updatedAt: new Date(message.timestamp).toISOString(),
+            messages: [
+              ...session.messages,
+              {
+                id: message.id,
+                role: message.role,
+                content: message.content,
+                createdAt: new Date(message.timestamp).toISOString(),
+              },
+            ],
+          };
+        })
+      )
+    );
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
   }
 
   async function createSession(firstPrompt = "") {
@@ -378,6 +482,7 @@ export function StudyWorkspace() {
       throw new Error(payload.error?.message || "Unable to create a study session.");
     }
 
+<<<<<<< HEAD
     const normalizedSession = normalizeSession(payload.data.session);
 
     if (!normalizedSession) {
@@ -390,15 +495,27 @@ export function StudyWorkspace() {
 
   async function handleNewSession() {
     if (sending || loadingSessions) {
+=======
+    mergeSession(payload.data.session);
+    return payload.data.session;
+  }
+
+  async function handleNewSession() {
+    if (sending) {
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
       return;
     }
 
     setError(null);
 
     try {
+<<<<<<< HEAD
       const session = await createSession();
       setActiveSessionId(session.id);
       setMobileSessionsOpen(false);
+=======
+      await createSession();
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
     } catch (createError) {
       const message = createError instanceof Error ? createError.message : "Unable to create a study session.";
       setError(message);
@@ -408,13 +525,20 @@ export function StudyWorkspace() {
   async function handleSend(text: string) {
     const trimmed = text.trim();
 
+<<<<<<< HEAD
     if (!trimmed || sending || loadingSessions || authLoading || !ready) {
+=======
+    if (!trimmed || sending) {
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
       return;
     }
 
     setError(null);
     setSending(true);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
     let sessionForRequest = activeSession;
 
     try {
@@ -429,6 +553,7 @@ export function StudyWorkspace() {
         timestamp: Date.now(),
       };
 
+<<<<<<< HEAD
       const optimisticMessages = [
         ...(sessionForRequest?.messages ?? []),
         {
@@ -439,6 +564,9 @@ export function StudyWorkspace() {
         },
       ];
 
+=======
+      const optimisticMessages = [...(sessionForRequest?.messages ?? []), userMessage];
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
       appendMessage(sessionForRequest.id, userMessage);
 
       const response = await fetch("/api/chat", {
@@ -448,12 +576,16 @@ export function StudyWorkspace() {
         },
         body: JSON.stringify({
           sessionId: sessionForRequest.id,
+<<<<<<< HEAD
           messages: optimisticMessages.map((message) => ({
             id: message.id,
             role: message.role,
             content: message.content,
             timestamp: safeTimestamp(message.createdAt),
           })),
+=======
+          messages: optimisticMessages,
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
         }),
       });
 
@@ -465,11 +597,17 @@ export function StudyWorkspace() {
       }
 
       if (payload.data?.session) {
+<<<<<<< HEAD
         upsertSession(payload.data.session);
       } else if (payload.data?.message) {
         appendMessage(sessionForRequest.id, payload.data.message);
       } else {
         throw new Error("Malformed response from the tutor.");
+=======
+        mergeSession(payload.data.session);
+      } else if (payload.data?.message) {
+        appendMessage(sessionForRequest.id, payload.data.message);
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
       }
     } catch (sendError) {
       const message = sendError instanceof Error ? sendError.message : "Network error. Please try again.";
@@ -488,6 +626,7 @@ export function StudyWorkspace() {
     }
   }
 
+<<<<<<< HEAD
   const showLoadingShell = (!ready || authLoading || loadingSessions) && sessions.length === 0;
   const hasMessages = activeMessages.length > 0;
   const sessionMessageCount = Array.isArray(activeSession?.messages) ? activeSession.messages.length : 0;
@@ -637,12 +776,84 @@ export function StudyWorkspace() {
           </div>
         </div>
       </section>
+=======
+  return (
+    <div className="relative flex min-h-[calc(100dvh-20rem)] w-full flex-col gap-4 lg:flex-row">
+      <div className="flex items-center justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-3 shadow-glow lg:hidden">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study sessions</p>
+          <p className="mt-1 text-sm text-slate-100">{activeSession?.title ?? "Start a session"}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="ghost" size="icon" onClick={() => setMobileSessionsOpen((current) => !current)} aria-label="Toggle sessions">
+            <Menu className="h-4 w-4" />
+          </Button>
+          <Button type="button" size="icon" onClick={handleNewSession} aria-label="New session">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <aside className="hidden w-[19rem] shrink-0 flex-col rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 shadow-glow lg:flex">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study sessions</p>
+            <h2 className="mt-2 text-lg font-semibold text-white">Resumable workspace</h2>
+          </div>
+          <Button type="button" size="icon" onClick={handleNewSession} aria-label="New session">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="mt-4 flex items-center gap-2 rounded-[1.25rem] border border-white/10 bg-slate-950/40 px-3 py-2">
+          <Search className="h-4 w-4 text-slate-400" />
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search sessions"
+            className="border-0 bg-transparent px-0 text-sm text-slate-100 placeholder:text-slate-500 focus-visible:ring-0"
+          />
+        </div>
+
+        <div className="mt-4 flex-1 space-y-2 overflow-y-auto pr-1">
+          {loadingSessions ? (
+            <div className="rounded-[1.25rem] border border-dashed border-white/10 p-4 text-sm text-slate-400">Loading sessions...</div>
+          ) : filteredSessions.length > 0 ? (
+            filteredSessions.map((session) => (
+              <button
+                key={session.id}
+                type="button"
+                onClick={() => setActiveSessionId(session.id)}
+                className={`w-full rounded-[1.5rem] border px-3 py-3 text-left transition-colors ${
+                  session.id === activeSessionId
+                    ? "border-cyan-300/25 bg-cyan-400/10"
+                    : "border-white/8 bg-white/[0.02] hover:bg-white/[0.05]"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-100">{session.title}</p>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{getPreview(session)}</p>
+                  </div>
+                  <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                </div>
+              </button>
+            ))
+          ) : (
+            <div className="rounded-[1.25rem] border border-dashed border-white/10 p-4 text-sm text-slate-400">
+              No sessions yet. Create one to begin.
+            </div>
+          )}
+        </div>
+      </aside>
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
 
       {mobileSessionsOpen ? (
         <div className="fixed inset-0 z-30 bg-slate-950/80 p-4 backdrop-blur-sm lg:hidden">
           <div className="mx-auto flex h-full w-full max-w-md flex-col rounded-[2rem] border border-white/10 bg-slate-950 p-4 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <div>
+<<<<<<< HEAD
                 <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Study sessions</p>
                 <h2 className="mt-1 text-base font-semibold text-white">Session history</h2>
               </div>
@@ -651,6 +862,16 @@ export function StudyWorkspace() {
                   <Plus className="h-4 w-4" />
                 </Button>
                 <Button type="button" variant="ghost" size="icon" onClick={() => setMobileSessionsOpen(false)} aria-label="Close sessions" className="h-9 w-9">
+=======
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study sessions</p>
+                <h2 className="mt-2 text-lg font-semibold text-white">Session history</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button type="button" size="icon" onClick={handleNewSession} aria-label="New session">
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Button type="button" variant="ghost" size="icon" onClick={() => setMobileSessionsOpen(false)} aria-label="Close sessions">
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
                   <Menu className="h-4 w-4" />
                 </Button>
               </div>
@@ -666,7 +887,11 @@ export function StudyWorkspace() {
               />
             </div>
 
+<<<<<<< HEAD
             <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+=======
+            <div className="mt-4 flex-1 space-y-2 overflow-y-auto pr-1">
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
               {filteredSessions.length > 0 ? (
                 filteredSessions.map((session) => (
                   <button
@@ -675,7 +900,10 @@ export function StudyWorkspace() {
                     onClick={() => {
                       setActiveSessionId(session.id);
                       setMobileSessionsOpen(false);
+<<<<<<< HEAD
                       shouldAutoScrollRef.current = true;
+=======
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
                     }}
                     className={`w-full rounded-[1.5rem] border px-3 py-3 text-left transition-colors ${
                       session.id === activeSessionId
@@ -696,6 +924,76 @@ export function StudyWorkspace() {
           </div>
         </div>
       ) : null}
+<<<<<<< HEAD
+=======
+
+      <section className="flex min-w-0 flex-1 flex-col gap-4 rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
+        <div className="flex flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study room</p>
+            <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">{activeSession?.title ?? "Create your first study session"}</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+              Your questions, answers, and session history are stored in Supabase so you can pick up where you left off on any device.
+            </p>
+          </div>
+          <div className="text-sm text-slate-400">
+            {activeSession ? (
+              <>
+                <div>{activeSession.messages.length} saved messages</div>
+                <div className="mt-1">Updated {new Date(activeSession.updatedAt).toLocaleString()}</div>
+              </>
+            ) : (
+              <div>No session selected</div>
+            )}
+          </div>
+        </div>
+
+        {error ? (
+          <div className="rounded-[1.5rem] border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-100">{error}</div>
+        ) : null}
+
+        <div className="scrollbar-hide flex-1 overflow-y-auto rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 sm:p-6">
+          <div className="flex flex-col gap-4">
+            {activeMessages.map((message) => (
+              <ChatMessageComponent key={message.id} message={message} />
+            ))}
+
+            {!activeSession || activeSession.messages.length === 0 ? (
+              <div className="mt-6 rounded-[1.75rem] border border-dashed border-slate-400/25 bg-slate-400/5 p-4 text-sm text-slate-400">
+                <p className="mb-2 font-medium text-slate-200">Ready to help.</p>
+                <p className="mb-4 leading-7 text-slate-400">
+                  Try a starter prompt or ask your own question. The tutor will answer with structured, step-by-step guidance.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {starterPrompts.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={() => handleSend(prompt)}
+                      className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-slate-200 transition-colors hover:bg-white/[0.08]"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {sending ? (
+              <div className="flex justify-start">
+                <TypingIndicator />
+              </div>
+            ) : null}
+
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        <div className="w-full pb-1">
+          <ChatInput onSend={handleSend} disabled={sending} />
+        </div>
+      </section>
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
     </div>
   );
 }

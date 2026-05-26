@@ -47,7 +47,10 @@ body {
 
 body {
   overflow-x: hidden;
+<<<<<<< HEAD
   overflow-y: hidden;
+=======
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
 }
 
 textarea {
