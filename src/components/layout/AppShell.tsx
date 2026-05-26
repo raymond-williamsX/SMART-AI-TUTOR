@@ -32,7 +32,7 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
           {children}
         </main>
       </div>
-      <MobileNav />
+      {!isChatRoute ? <MobileNav /> : null}
     </div>
   );
 }

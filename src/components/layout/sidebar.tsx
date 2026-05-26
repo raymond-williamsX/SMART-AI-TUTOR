@@ -1,15 +1,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelLeftOpen, PanelRightOpen, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LogOut, PanelLeftOpen, PanelRightOpen, Sparkles } from "lucide-react";
 
 import { navigationItems } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NavItem } from "./NavItem";
+import { useAuth } from "@/hooks/use-auth";
 
 export function Sidebar({ collapsed, onToggleCollapsed }: { collapsed?: boolean; onToggleCollapsed?: () => void }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { signOut } = useAuth();
 
   return (
     <aside
@@ -75,6 +79,18 @@ export function Sidebar({ collapsed, onToggleCollapsed }: { collapsed?: boolean;
               The shell is prepared for document tutoring, topic tutoring, notes, quizzes, and progress analytics.
             </p>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              await signOut();
+              router.push("/login");
+            }}
+            className="w-full justify-start border-white/10 bg-white/5 text-slate-200 hover:bg-white/10"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </Button>
         </div>
       ) : (
         <div className="mt-auto flex justify-center pt-4">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SendHorizontal } from "lucide-react";
+import { Mic, Paperclip, SendHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function ChatInput({ onSend, disabled }: { onSend: (text: string) => void; disabled?: boolean }) {
@@ -17,6 +17,14 @@ export function ChatInput({ onSend, disabled }: { onSend: (text: string) => void
   return (
     <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.03] p-2.5 shadow-glow backdrop-blur-xl">
       <div className="flex w-full items-end gap-2.5">
+        <div className="flex items-center gap-1">
+          <Button type="button" variant="ghost" size="icon" aria-label="Upload attachment" disabled={disabled} className="h-11 w-11 rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]">
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" aria-label="Voice input placeholder" disabled={disabled} className="h-11 w-11 rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]">
+            <Mic className="h-4 w-4" />
+          </Button>
+        </div>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}

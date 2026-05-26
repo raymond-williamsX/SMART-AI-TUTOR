@@ -2,6 +2,7 @@ import {
   BarChart3,
   BookOpen,
   CalendarDays,
+  Settings2,
   MessageSquareText,
   Upload,
 } from "lucide-react";
@@ -20,4 +21,5 @@ export const navigationItems: NavigationItem[] = [
   { label: "Upload", href: "/upload", icon: Upload },
   { label: "Schedule", href: "/schedule", icon: CalendarDays },
   { label: "Progress", href: "/progress", icon: BookOpen },
+  { label: "Settings", href: "/settings", icon: Settings2 },
 ];

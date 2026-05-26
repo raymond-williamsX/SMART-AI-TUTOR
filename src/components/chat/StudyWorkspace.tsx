@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Clock3, Menu, Plus, Search } from "lucide-react";
+import { ArrowDown, Clock3, LogOut, Menu, Plus, Search } from "lucide-react";
 
 import { ChatInput } from "./ChatInput";
 import { ChatMessage as ChatMessageComponent } from "./ChatMessage";
@@ -9,9 +10,12 @@ import { TypingIndicator } from "./TypingIndicator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
+import { navigationItems } from "@/lib/navigation";
 import type { ChatMessage } from "@/lib/chat/types";
 import { DEFAULT_STUDY_SESSION_TITLE } from "@/lib/study-sessions/title";
 import type { StudySessionRecord } from "@/lib/study-sessions/types";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 type ApiErrorResponse = {
   code: string;
@@ -85,7 +89,9 @@ function getPreview(session: StudySessionRecord) {
 }
 
 export function StudyWorkspace() {
+  const router = useRouter();
   const { user, ready, loading: authLoading } = useAuth();
+  const { signOut } = useAuth();
   const [sessions, setSessions] = useState<StudySessionRecord[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -94,6 +100,8 @@ export function StudyWorkspace() {
   const [error, setError] = useState<string | null>(null);
   const [mobileSessionsOpen, setMobileSessionsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const transcriptRef = useRef<HTMLDivElement>(null);
+  const [isNearBottom, setIsNearBottom] = useState(true);
 
   const activeSession = useMemo(
     () => sessions.find((session) => session.id === activeSessionId) ?? null,
@@ -117,9 +125,23 @@ export function StudyWorkspace() {
     });
   }, [query, sessions]);
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  };
+
+  const handleTranscriptScroll = () => {
+    const container = transcriptRef.current;
+    if (!container) return;
+
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    setIsNearBottom(distanceFromBottom < 96);
+  };
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeMessages.length, sending, activeSessionId]);
+    if (isNearBottom) {
+      scrollToBottom();
+    }
+  }, [activeMessages.length, sending, activeSessionId, isNearBottom]);
 
   useEffect(() => {
     if (!ready || !user) {
@@ -278,6 +300,7 @@ export function StudyWorkspace() {
 
       const optimisticMessages = [...(sessionForRequest?.messages ?? []), userMessage];
       appendMessage(sessionForRequest.id, userMessage);
+      setIsNearBottom(true);
 
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -317,6 +340,8 @@ export function StudyWorkspace() {
       setSending(false);
     }
   }
+
+  const navLinks = navigationItems;
 
   return (
     <div className="relative flex min-h-[calc(100dvh-7rem)] w-full flex-col gap-4 lg:flex-row">
@@ -439,11 +464,40 @@ export function StudyWorkspace() {
                 <div className="rounded-[1.25rem] border border-dashed border-white/10 p-4 text-sm text-slate-400">No sessions yet. Create one to begin.</div>
               )}
             </div>
+
+            <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Navigation</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {navLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileSessionsOpen(false)}
+                    className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3 text-sm text-slate-200 transition-colors hover:bg-white/[0.06]"
+                  >
+                    <item.icon className="h-4 w-4 text-cyan-300" />
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start border-white/10 bg-white/5 text-slate-200 hover:bg-white/10"
+                onClick={async () => {
+                  await signOut();
+                  router.push("/login");
+                }}
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       ) : null}
 
-      <section className="flex min-h-[calc(100dvh-12rem)] min-w-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
+      <section className="relative flex min-h-[calc(100dvh-12rem)] min-w-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
         <div className="flex shrink-0 flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study room</p>
@@ -456,7 +510,11 @@ export function StudyWorkspace() {
 
         {error ? <div className="rounded-[1.5rem] border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-100">{error}</div> : null}
 
-        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 sm:p-6">
+        <div
+          ref={transcriptRef}
+          onScroll={handleTranscriptScroll}
+          className="scrollbar-hide min-h-0 flex-1 overflow-y-auto rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 pb-6 sm:p-6 sm:pb-8"
+        >
           <div className="flex flex-col gap-4">
             {showLoadingShell ? (
               <div className="rounded-[1.5rem] border border-dashed border-slate-400/25 bg-slate-400/5 p-4 text-sm text-slate-400">
@@ -501,7 +559,24 @@ export function StudyWorkspace() {
           </div>
         </div>
 
-        <div className="shrink-0 w-full rounded-[1.75rem] border border-white/10 bg-slate-950/70 p-3 backdrop-blur-xl">
+        <AnimatePresence>
+          {!isNearBottom ? (
+            <motion.button
+              type="button"
+              initial={{ opacity: 0, y: 8, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.92 }}
+              transition={{ type: "spring", stiffness: 280, damping: 24 }}
+              onClick={scrollToBottom}
+              className="absolute bottom-[6.5rem] right-4 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 text-cyan-100 shadow-[0_16px_44px_rgba(34,211,238,0.18)] backdrop-blur-xl sm:bottom-[7rem] sm:right-6"
+              aria-label="Scroll to latest message"
+            >
+              <ArrowDown className="h-4 w-4" />
+            </motion.button>
+          ) : null}
+        </AnimatePresence>
+
+        <div className="sticky bottom-0 z-20 w-full rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl">
           <ChatInput onSend={handleSend} disabled={sending || loadingSessions || authLoading || !ready} />
         </div>
       </section>

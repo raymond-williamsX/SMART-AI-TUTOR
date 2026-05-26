@@ -13,5 +13,6 @@
   "/page": "app/page.js",
   "/progress/page": "app/progress/page.js",
   "/schedule/page": "app/schedule/page.js",
+  "/settings/page": "app/settings/page.js",
   "/upload/page": "app/upload/page.js"
 }
