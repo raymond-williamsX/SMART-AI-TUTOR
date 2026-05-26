@@ -30,6 +30,10 @@ export function LoginForm({ redirectTo = "/dashboard", initialErrorMessage }: { 
       await signIn({ email: email.trim(), password });
       router.push(redirectTo);
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+      router.refresh();
+>>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
 =======
       router.refresh();
 >>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118

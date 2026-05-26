@@ -9,6 +9,12 @@
   --card-foreground: 210 10% 94%;
   --popover: 220 6% 8%;
   --popover-foreground: 210 10% 94%;
+  --background: 220 6% 6%; /* deep charcoal */
+  --foreground: 210 10% 94%;
+  --card: 220 6% 8%;
+  --card-foreground: 210 10% 94%;
+  --popover: 220 6% 8%;
+  --popover-foreground: 210 10% 94%;
   --primary: 183 100% 54%;
   --primary-foreground: 220 6% 6%;
   --secondary: 220 8% 10%;
@@ -43,51 +49,6 @@ body {
     linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)) 60%, hsl(223 40% 6%));
   color: hsl(var(--foreground));
   font-feature-settings: "rlig" 1, "calt" 1;
-}
-
-body {
-  overflow-x: hidden;
-<<<<<<< HEAD
-  overflow-y: hidden;
-=======
->>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
-}
-
-textarea {
-  font: inherit;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-.markdown-content pre,
-.markdown-content code {
-  font-family: ui-monospace, SFMono-Regular, SF Mono, Consolas, Liberation Mono, Menlo, monospace;
-}
-
-.markdown-content pre code {
-  display: block;
-  white-space: pre;
-}
-
-.markdown-content table {
-  display: block;
-  width: 100%;
-  overflow-x: auto;
-  border-collapse: collapse;
-}
-
-.markdown-content th,
-.markdown-content td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0.65rem 0.85rem;
-  text-align: left;
 }
 
 ::selection {

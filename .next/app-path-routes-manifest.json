@@ -1,0 +1,17 @@
+{
+  "/(auth)/login/page": "/login",
+  "/(auth)/signup/page": "/signup",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/chat/route": "/api/chat",
+  "/api/health/route": "/api/health",
+  "/api/study-sessions/[id]/route": "/api/study-sessions/[id]",
+  "/api/study-sessions/route": "/api/study-sessions",
+  "/auth/callback/route": "/auth/callback",
+  "/chat/page": "/chat",
+  "/dashboard/page": "/dashboard",
+  "/page": "/",
+  "/progress/page": "/progress",
+  "/schedule/page": "/schedule",
+  "/upload/page": "/upload"
+}
