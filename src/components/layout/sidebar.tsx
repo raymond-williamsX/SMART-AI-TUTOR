@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { LogOut, PanelLeftOpen, PanelRightOpen, Sparkles } from "lucide-react";
@@ -10,20 +13,62 @@ import { Button } from "@/components/ui/button";
 import { NavItem } from "./NavItem";
 import { useAuth } from "@/hooks/use-auth";
 
-export function Sidebar({ collapsed, onToggleCollapsed }: { collapsed?: boolean; onToggleCollapsed?: () => void }) {
+export function Sidebar({
+  expanded,
+  onExpandedChange,
+}: {
+  expanded: boolean;
+  onExpandedChange: (expanded: boolean) => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useAuth();
+  const [canHover, setCanHover] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setCanHover(media.matches);
+
+    update();
+    media.addEventListener("change", update);
+
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  const compact = !expanded;
+
+  function openSidebar() {
+    onExpandedChange(true);
+  }
+
+  function closeSidebar() {
+    onExpandedChange(false);
+  }
+
+  function toggleSidebar() {
+    onExpandedChange(!expanded);
+  }
+
+  const asideWidthClass = useMemo(() => {
+    if (expanded) {
+      return "w-[18rem] sm:w-[19rem]";
+    }
+
+    return "w-[4.75rem] sm:w-[5.5rem]";
+  }, [expanded]);
 
   return (
     <aside
       className={cn(
-        "hidden min-h-screen shrink-0 border-r border-white/10 bg-slate-950/70 backdrop-blur-xl transition-[width,padding] duration-200 lg:flex lg:flex-col",
-        collapsed ? "w-[86px] px-3 py-4" : "w-[272px] px-4 py-5"
+        "sticky top-0 z-40 flex h-dvh shrink-0 flex-col border-r border-white/10 bg-slate-950/70 backdrop-blur-xl transition-[width,padding] duration-200 ease-out",
+        asideWidthClass,
+        compact ? "px-2.5 py-3 sm:px-3 sm:py-4" : "px-3 py-4 sm:px-4 sm:py-5"
       )}
+      onMouseEnter={canHover ? openSidebar : undefined}
+      onMouseLeave={canHover ? closeSidebar : undefined}
     >
-      <div className={cn("mb-4 flex items-center", collapsed ? "justify-center" : "justify-between") }>
-        {!collapsed ? (
+      <div className={cn("mb-4 flex items-center gap-2", compact ? "justify-center" : "justify-between") }>
+        {!compact ? (
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-300 to-sky-500 text-slate-950 shadow-lg shadow-cyan-500/20">
               <Sparkles className="h-4 w-4" />
@@ -34,29 +79,34 @@ export function Sidebar({ collapsed, onToggleCollapsed }: { collapsed?: boolean;
             </div>
           </div>
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-300 to-sky-500 text-slate-950 shadow-lg shadow-cyan-500/20">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label="Expand navigation"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-300 to-sky-500 text-slate-950 shadow-lg shadow-cyan-500/20 transition-transform hover:scale-[1.02]"
+          >
             <Sparkles className="h-4 w-4" />
-          </div>
+          </button>
         )}
         <Button
           type="button"
           size="icon"
           variant="ghost"
-          onClick={onToggleCollapsed}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 text-slate-200 hover:bg-white/10"
+          onClick={toggleSidebar}
+          aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
+          className="h-9 w-9 shrink-0 rounded-xl border border-white/10 bg-white/5 text-slate-200 hover:bg-white/10"
         >
-          {collapsed ? <PanelRightOpen className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+          {expanded ? <PanelLeftOpen className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
         </Button>
       </div>
 
-      {!collapsed ? (
+      {!compact ? (
         <div className="mb-4 flex items-center gap-2">
           <Badge className="border-cyan-300/20 bg-cyan-300/10 text-cyan-100">Learning workspace</Badge>
         </div>
       ) : null}
 
-      <nav className={cn("space-y-2", collapsed && "mt-1") }>
+      <nav className={cn("space-y-2", compact && "mt-1") }>
         {navigationItems.map((item) => {
           const active = pathname === item.href;
           return (
@@ -64,13 +114,13 @@ export function Sidebar({ collapsed, onToggleCollapsed }: { collapsed?: boolean;
               key={item.href}
               item={item}
               active={active}
-              compact={Boolean(collapsed)}
+              compact={compact}
             />
           );
         })}
       </nav>
 
-      {!collapsed ? (
+      {!compact ? (
         <div className="mt-auto space-y-4 pt-5">
           <div className="h-px w-full bg-white/10" />
           <div className="rounded-3xl border border-white/10 bg-white/5 p-4">

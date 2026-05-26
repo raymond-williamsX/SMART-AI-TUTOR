@@ -10,7 +10,6 @@ import { TypingIndicator } from "./TypingIndicator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
-import { navigationItems } from "@/lib/navigation";
 import type { ChatMessage } from "@/lib/chat/types";
 import { DEFAULT_STUDY_SESSION_TITLE } from "@/lib/study-sessions/title";
 import type { StudySessionRecord } from "@/lib/study-sessions/types";
@@ -340,8 +339,6 @@ export function StudyWorkspace() {
     }
   }
 
-  const navLinks = navigationItems;
-
   return (
     <div className="relative flex min-h-[calc(100dvh-7rem)] w-full flex-col gap-4 lg:flex-row">
       <div className="flex shrink-0 items-center justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-3 shadow-glow lg:hidden">
@@ -464,21 +461,7 @@ export function StudyWorkspace() {
               )}
             </div>
 
-            <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Navigation</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {navLinks.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileSessionsOpen(false)}
-                    className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3 text-sm text-slate-200 transition-colors hover:bg-white/[0.06]"
-                  >
-                    <item.icon className="h-4 w-4 text-cyan-300" />
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
+            <div className="mt-4 border-t border-white/10 pt-4">
               <Button
                 type="button"
                 variant="outline"
