@@ -109,7 +109,7 @@ self.__SERVER_FILES_MANIFEST={
         "transform": "lodash/{{member}}"
       }
     },
-    "outputFileTracingRoot": "C:\\Users\\USER",
+    "outputFileTracingRoot": "C:\\Users\\USER\\Desktop\\CODE PROJECTS\\SMART TUTOR AI",
     "cacheComponents": false,
     "cacheLife": {
       "default": {
@@ -309,12 +309,12 @@ self.__SERVER_FILES_MANIFEST={
     "bundlePagesRouterDependencies": false,
     "configFileName": "next.config.ts",
     "turbopack": {
-      "root": "C:\\Users\\USER"
+      "root": "C:\\Users\\USER\\Desktop\\CODE PROJECTS\\SMART TUTOR AI"
     },
     "distDirRoot": ".next"
   },
   "appDir": "C:\\Users\\USER\\Desktop\\CODE PROJECTS\\SMART TUTOR AI",
-  "relativeAppDir": "Desktop\\CODE PROJECTS\\SMART TUTOR AI",
+  "relativeAppDir": "",
   "files": [
     ".next\\routes-manifest.json",
     ".next\\server\\pages-manifest.json",

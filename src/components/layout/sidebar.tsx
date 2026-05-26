@@ -33,7 +33,6 @@ export function Sidebar({ collapsed, onToggleCollapsed }: { collapsed?: boolean;
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-300 to-sky-500 text-slate-950 shadow-lg shadow-cyan-500/20">
             <Sparkles className="h-4 w-4" />
           </div>
-<<<<<<< HEAD
         )}
         <Button
           type="button"
@@ -45,12 +44,6 @@ export function Sidebar({ collapsed, onToggleCollapsed }: { collapsed?: boolean;
         >
           {collapsed ? <PanelRightOpen className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
         </Button>
-=======
-        </div>
-        <div className="mt-4 flex items-center gap-2">
-          <Badge className="border-cyan-300/20 bg-cyan-300/10 text-cyan-100">Learning workspace</Badge>
-        </div>
->>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
       </div>
 
       {!collapsed ? (

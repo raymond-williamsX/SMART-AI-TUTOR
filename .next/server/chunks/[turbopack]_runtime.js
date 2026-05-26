@@ -1,5 +1,5 @@
 const RUNTIME_PUBLIC_PATH = "server/chunks/[turbopack]_runtime.js";
-const RELATIVE_ROOT_PATH = "../../../..";
+const RELATIVE_ROOT_PATH = "..";
 const ASSET_PREFIX = "/";
 const WORKER_FORWARDED_GLOBALS = ["NEXT_DEPLOYMENT_ID","NEXT_CLIENT_ASSET_SUFFIX"];
 // Apply forwarded globals from workerData if running in a worker thread

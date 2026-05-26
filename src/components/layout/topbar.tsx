@@ -4,10 +4,6 @@ import { Bell, Search, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Bell, Search, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,10 +23,7 @@ export function Topbar() {
       setSigningOut(true);
       await signOut();
       router.push("/login");
-<<<<<<< HEAD
-=======
       router.refresh();
->>>>>>> 8967ed93ba299b787e1aa565943f8e449bb44118
     } finally {
       setSigningOut(false);
     }

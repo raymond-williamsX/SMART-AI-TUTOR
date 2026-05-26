@@ -1,5 +1,5 @@
 const RUNTIME_PUBLIC_PATH = "chunks/[turbopack]_runtime.js";
-const RELATIVE_ROOT_PATH = "../../../..";
+const RELATIVE_ROOT_PATH = "..";
 const ASSET_PREFIX = "/";
 const WORKER_FORWARDED_GLOBALS = [];
 /**
