@@ -23,7 +23,7 @@ const INITIAL_WELCOME: ChatMessage = {
   role: "assistant",
   content:
     "Hi, I'm EduAgent, your AI tutor. Ask me anything you'd like to learn, and I'll explain it step-by-step with clear examples.",
-  timestamp: Date.now(),
+  timestamp: 0,
 };
 
 export function ChatContainer() {

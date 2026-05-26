@@ -54,7 +54,7 @@ const WELCOME_MESSAGE: ChatMessage = {
   id: "welcome-msg",
   role: "assistant",
   content: "Hi, I'm EduAgent, your AI tutor. Ask me anything you'd like to learn, and I'll explain it step-by-step with clear examples.",
-  timestamp: Date.now(),
+  timestamp: 0,
 };
 
 const starterPrompts = [
@@ -90,8 +90,7 @@ function getPreview(session: StudySessionRecord) {
 
 export function StudyWorkspace() {
   const router = useRouter();
-  const { user, ready, loading: authLoading } = useAuth();
-  const { signOut } = useAuth();
+  const { user, ready, loading: authLoading, signOut } = useAuth();
   const [sessions, setSessions] = useState<StudySessionRecord[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [query, setQuery] = useState("");

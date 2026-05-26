@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
@@ -18,6 +19,12 @@ function safeTimestamp(value: unknown) {
 }
 
 export function ChatMessage({ message }: { message?: MsgType | null }) {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   const safeMessage = {
     id: typeof message?.id === "string" ? message.id : "unknown-message",
     role: message?.role === "assistant" ? "assistant" : "user",
@@ -27,6 +34,7 @@ export function ChatMessage({ message }: { message?: MsgType | null }) {
 
   const isUser = safeMessage.role === "user";
   const timestampLabel = new Date(safeMessage.timestamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const showTimestamp = hasMounted && safeMessage.timestamp > 0 && safeMessage.id !== "welcome-msg";
 
   const renderedContent = isUser ? (
     <div className="whitespace-pre-wrap break-words text-cyan-50">{safeMessage.content || "(empty message)"}</div>
@@ -86,7 +94,7 @@ export function ChatMessage({ message }: { message?: MsgType | null }) {
       >
         <div className="mb-1.5 flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.2em] text-slate-400">
           <span>{isUser ? "You" : "EduAgent"}</span>
-          <span>{timestampLabel}</span>
+          <span suppressHydrationWarning>{showTimestamp ? timestampLabel : ""}</span>
         </div>
         <div className={cn("text-[13px] leading-6 sm:text-sm", isUser ? "text-cyan-50" : "text-slate-100")}>{renderedContent}</div>
       </div>
