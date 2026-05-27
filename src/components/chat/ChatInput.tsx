@@ -15,7 +15,7 @@ export function ChatInput({ onSend, disabled }: { onSend: (text: string) => void
   }
 
   return (
-    <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.03] p-2.5 shadow-glow backdrop-blur-xl">
+    <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-2.5 shadow-[0_18px_50px_rgba(15,23,42,0.28)] backdrop-blur-xl">
       <div className="flex w-full items-end gap-2.5">
         <div className="flex items-center gap-1">
           <Button type="button" variant="ghost" size="icon" aria-label="Upload attachment" disabled={disabled} className="h-11 w-11 rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]">

@@ -19,14 +19,24 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
   }, [pathname]);
 
   return (
-    <div className="flex min-h-screen w-full bg-background text-foreground">
+    <div
+      className={cn(
+        "flex w-full bg-background text-foreground",
+        isChatRoute ? "h-dvh overflow-hidden" : "min-h-screen"
+      )}
+    >
       <Sidebar />
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+      <div
+        className={cn(
+          "flex min-w-0 flex-1 flex-col",
+          isChatRoute ? "h-dvh overflow-hidden" : "min-h-screen"
+        )}
+      >
         <Topbar onMenuClick={() => setMobileNavOpen(true)} />
         <main
           className={cn(
             "min-h-0 flex-1 overflow-x-hidden",
-            isChatRoute ? "px-2 py-2 sm:px-3 sm:py-3 lg:px-4 lg:py-4" : "px-4 pb-6 pt-6 sm:px-6 sm:pb-8 lg:px-8"
+            isChatRoute ? "flex min-h-0 flex-col overflow-hidden px-2 py-2 sm:px-3 sm:py-3 lg:px-4 lg:py-4" : "px-4 pb-6 pt-6 sm:px-6 sm:pb-8 lg:px-8"
           )}
         >
           {children}

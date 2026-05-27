@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, Clock3, LogOut, Menu, Plus, Search } from "lucide-react";
 
@@ -340,7 +339,7 @@ export function StudyWorkspace() {
   }
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden lg:flex-row">
+    <div className="relative flex h-full min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden lg:flex-row">
       <div className="flex shrink-0 items-center justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-3 shadow-glow lg:hidden">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study sessions</p>
@@ -479,7 +478,7 @@ export function StudyWorkspace() {
         </div>
       ) : null}
 
-      <section className="relative flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
+      <section className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
         <div className="flex shrink-0 flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study room</p>
@@ -495,7 +494,7 @@ export function StudyWorkspace() {
         <div
           ref={transcriptRef}
           onScroll={handleTranscriptScroll}
-          className="scrollbar-hide min-h-0 flex-1 overflow-y-auto rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 pb-6 sm:p-6 sm:pb-8"
+          className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 pb-24 sm:p-6 sm:pb-28"
         >
           <div className="flex flex-col gap-4">
             {showLoadingShell ? (
@@ -550,7 +549,7 @@ export function StudyWorkspace() {
               exit={{ opacity: 0, y: 8, scale: 0.92 }}
               transition={{ type: "spring", stiffness: 280, damping: 24 }}
               onClick={scrollToBottom}
-              className="absolute bottom-[6.5rem] right-4 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 text-cyan-100 shadow-[0_16px_44px_rgba(34,211,238,0.18)] backdrop-blur-xl sm:bottom-[7rem] sm:right-6"
+              className="absolute bottom-[8.5rem] right-4 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 text-cyan-100 shadow-[0_16px_44px_rgba(34,211,238,0.18)] backdrop-blur-xl sm:bottom-[9.5rem] sm:right-6"
               aria-label="Scroll to latest message"
             >
               <ArrowDown className="h-4 w-4" />
@@ -558,8 +557,11 @@ export function StudyWorkspace() {
           ) : null}
         </AnimatePresence>
 
-        <div className="z-20 w-full shrink-0 rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl">
-          <ChatInput onSend={handleSend} disabled={sending || loadingSessions || authLoading || !ready} />
+        <div className="relative z-20 w-full shrink-0 pt-2 sm:pt-3">
+          <div className="pointer-events-none absolute inset-x-0 -top-5 h-8 bg-gradient-to-t from-slate-950/70 to-transparent blur-xl" />
+          <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/85 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(2,6,23,0.45)] backdrop-blur-xl">
+            <ChatInput onSend={handleSend} disabled={sending || loadingSessions || authLoading || !ready} />
+          </div>
         </div>
       </section>
     </div>
