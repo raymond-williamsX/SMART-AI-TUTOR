@@ -299,23 +299,25 @@ Agentic Learning Workflows
 
 ---
 
-👨‍💻 Contributors
+Contributors
 
-Built by passionate full-stack developers: 
-Iorliam Raymond raymondstudio.dev 
-Caleb Kale calebships.com
+Built by passionate full-stack developers:
+
+<b>Iorliam Raymond</b>
+ https://raymondstudio.dev 
+<b>Caleb Kale</b> https://calebships.com
 
 
 ---
 
-📄 License
+License
 
 This project is licensed under the MIT License.
 
 
 ---
 
-💡 Final Note
+Final Note
 
 EduAgent AI is not just another chatbot.
 
