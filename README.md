@@ -11,9 +11,9 @@ Unlike traditional chatbots, EduAgent AI is designed as an intelligent learning 
 
 ---
 
-✨ Features
+Features
 
-🧠 AI Tutoring Chat
+AI Tutoring Chat
 
 Real-time AI tutoring powered by Gemini
 
@@ -26,7 +26,7 @@ Step-by-step teaching approach
 Adaptive learning responses
 
 
-📚 Persistent Learning Sessions
+Persistent Learning Sessions
 
 Chat history saved automatically
 
@@ -37,7 +37,7 @@ Session memory powered by ElasticSearch
 Smart session organization
 
 
-📄 Smart Document Learning
+Smart Document Learning
 
 Upload and learn from:
 
@@ -61,7 +61,7 @@ Generate summaries
 Answer questions from uploaded content
 
 
-🖼️ AI Vision Support
+AI Vision Support
 
 EduAgent AI can understand:
 
@@ -76,7 +76,7 @@ Educational images
 Assignment photos
 
 
-🔐 Authentication System
+Authentication System
 
 Supabase Authentication
 
@@ -87,7 +87,7 @@ Secure sessions
 Cross-device persistence
 
 
-🎯 Personalized Study Experience
+Personalized Study Experience
 
 Topic-based tutoring
 
@@ -98,7 +98,7 @@ Learning continuity
 Intelligent session recall
 
 
-📱 Modern AI SaaS Interface
+ Modern AI SaaS Interface
 
 Mobile-first responsive UI
 
@@ -116,7 +116,7 @@ Smooth animations
 
 ---
 
-🏗️ Tech Stack
+Tech Stack
 
 Frontend
 
@@ -150,7 +150,7 @@ Vercel
 
 ---
 
-🧠 Architecture Overview
+Architecture Overview
 
 EduAgent AI uses a hybrid AI architecture combining:
 
@@ -212,7 +212,7 @@ Providing real-time tutoring assistance
 
 Clone the repository:
 
-git clone https://github.com/your-username/eduagent-ai.git
+git clone https://github.com/raymond-williamsX/SMART-TUTOR-AI.git
 
 Navigate into the project:
 
@@ -250,9 +250,8 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 🌐 Deployment
 
-The project is optimized for deployment on:
-
-[Vercel](https://vercel.com?utm_source=chatgpt.com)
+The project is optimized for deployment. 
+Vercel (eduagentai.vercel.app)
 
 
 
@@ -282,7 +281,7 @@ Autonomous study workflows
 
 🏆 Hackathon Project
 
-Built for the [Google Cloud Rapid Agent Hackathon](https://devpost.com/software/descend?utm_source=chatgpt.com)
+Built for the [Google Cloud Rapid Agent Hackathon]
 
 Focus Areas:
 
@@ -303,8 +302,8 @@ Agentic Learning Workflows
 👨‍💻 Contributors
 
 Built by passionate full-stack developers: 
-Iorliam Raymond @raymond-williamsX
-Caleb Rapto
+Iorliam Raymond raymondstudio.dev 
+Caleb Kale calebships.com
 
 
 ---
