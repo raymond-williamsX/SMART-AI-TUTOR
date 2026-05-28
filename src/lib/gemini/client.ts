@@ -1,3 +1,5 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 type GenerateResult = {
   text: string;
   raw: unknown;
@@ -20,54 +22,21 @@ export async function generateText(
 ): Promise<GenerateResult> {
   try {
     const apiKey = getApiKey();
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt,
-              },
-            ],
-          },
-        ],
-      }),
-    });
+    const response = await model.generateContent(prompt);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage =
-        errorData?.error?.message || `HTTP ${response.status}`;
-      console.error("[Gemini Error] API request failed", {
-        status: response.status,
-        error: errorMessage,
-      });
-      throw new Error(`Gemini API error: ${errorMessage}`);
+    if (!response.response) {
+      console.error("[Gemini Error] No response object returned");
+      throw new Error("Gemini API returned no response");
     }
 
-    const data = (await response.json()) as {
-      candidates?: Array<{
-        content?: {
-          parts?: Array<{
-            text?: string;
-          }>;
-        };
-      }>;
-    };
-
-    // Extract text from response
-    const text =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const text = response.response.text();
 
     if (!text || text.trim() === "") {
       console.error("[Gemini Error] Response text is empty", {
-        rawResponse: data,
+        rawResponse: response.response,
       });
       throw new Error(
         "Gemini API returned empty response. Check API key and rate limits."
@@ -76,7 +45,7 @@ export async function generateText(
 
     return {
       text,
-      raw: data,
+      raw: response.response,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
