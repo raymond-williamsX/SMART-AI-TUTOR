@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/USER/Desktop/CODE%20PROJECTS/SMART%20TUTOR%20AI/src/components/providers.tsx"],"sourcesContent":["\"use client\";\r\n\r\nimport { ThemeProvider } from \"next-themes\";\r\nimport type { ReactNode } from \"react\";\r\n\r\nexport function Providers({ children }: { children: ReactNode }) {\r\n  return (\r\n    <ThemeProvider attribute=\"class\" defaultTheme=\"dark\" enableSystem disableTransitionOnChange>\r\n      {children}\r\n    </ThemeProvider>\r\n  );\r\n}\r\n"],"names":["Providers","children","attribute","defaultTheme","enableSystem","disableTransitionOnChange"],"mappings":";;;;;AAEA;AAFA;;;AAKO,SAASA,UAAU,EAAEC,QAAQ,EAA2B;IAC7D,qBACE,8OAAC,qNAAa;QAACC,WAAU;QAAQC,cAAa;QAAOC,YAAY;QAACC,yBAAyB;kBACxFJ;;;;;;AAGP;KANgBD"}}]
-}
