@@ -1,3 +1,5 @@
+import type { ChatSource } from "@/lib/chat/types";
+
 export type StudyMessageRole = "user" | "assistant";
 
 export type StudySessionMessage = {
@@ -5,6 +7,7 @@ export type StudySessionMessage = {
   role: StudyMessageRole;
   content: string;
   createdAt: string;
+  sources?: ChatSource[];
 };
 
 export type StudySessionRecord = {

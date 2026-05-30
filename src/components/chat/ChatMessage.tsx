@@ -18,6 +18,17 @@ function safeTimestamp(value: unknown) {
   return Number.isFinite(timestamp) ? timestamp : Date.now();
 }
 
+function sourceDetail(source: NonNullable<MsgType["sources"]>[number]) {
+  const details = [
+    source.page ? `Page ${source.page}` : null,
+    source.slide ? `Slide ${source.slide}` : null,
+    source.chapter,
+    source.section,
+  ].filter(Boolean);
+
+  return details.length > 0 ? details.join(" · ") : "Uploaded material";
+}
+
 export function ChatMessage({ message }: { message?: MsgType | null }) {
   const [hasMounted, setHasMounted] = useState(false);
 
@@ -30,6 +41,7 @@ export function ChatMessage({ message }: { message?: MsgType | null }) {
     role: message?.role === "assistant" ? "assistant" : "user",
     content: safeMessageContent(message?.content),
     timestamp: safeTimestamp(message?.timestamp),
+    sources: Array.isArray(message?.sources) ? message.sources : [],
   } satisfies MsgType;
 
   const isUser = safeMessage.role === "user";
@@ -97,6 +109,22 @@ export function ChatMessage({ message }: { message?: MsgType | null }) {
           <span suppressHydrationWarning>{showTimestamp ? timestampLabel : ""}</span>
         </div>
         <div className={cn("text-[13px] leading-6 sm:text-sm", isUser ? "text-cyan-50" : "text-slate-100")}>{renderedContent}</div>
+        {!isUser && safeMessage.sources && safeMessage.sources.length > 0 ? (
+          <div className="mt-3 rounded-2xl border border-cyan-300/15 bg-cyan-300/5 px-3 py-2.5">
+            <p className="text-[10px] uppercase tracking-[0.22em] text-cyan-100/80">Based on</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {safeMessage.sources.map((source) => (
+                <span
+                  key={`${source.documentId}-${source.chunkId ?? source.page ?? source.slide ?? source.section ?? source.documentName}`}
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-200"
+                >
+                  {source.documentName}
+                  <span className="text-slate-400"> · {sourceDetail(source)}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </motion.div>
   );

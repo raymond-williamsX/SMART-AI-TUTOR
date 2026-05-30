@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Clock3, ExternalLink, FileUp, FolderOpen, Loader2, Plus, Search, UploadCloud } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, ExternalLink, FileText, FileUp, FolderOpen, Loader2, Plus, RefreshCw, Search, Trash2, UploadCloud } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { DEFAULT_UPLOAD_SESSION_TITLE, buildUploadPath, isAllowedUploadMimeType, UPLOADED_MATERIALS_BUCKET } from "@/lib/uploads/constants";
+import { DEFAULT_UPLOAD_SESSION_TITLE, buildUploadPath, getAcceptedUploadMimeTypes, isAllowedUploadMimeType, UPLOADED_MATERIALS_BUCKET } from "@/lib/uploads/constants";
 import type { UploadedMaterialRecord } from "@/lib/uploads/types";
 import type { StudySessionRecord } from "@/lib/study-sessions/types";
 
@@ -36,6 +36,20 @@ type SessionCreateApiResponse = {
   };
 };
 
+type MaterialsApiResponse = {
+  success: boolean;
+  requestId: string;
+  data?: {
+    materials: UploadedMaterialRecord[];
+    material?: UploadedMaterialRecord;
+    signedUrl?: string;
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+};
+
 type StorageRow = {
   id: string;
   user_id: string;
@@ -44,6 +58,13 @@ type StorageRow = {
   file_type: string;
   storage_path: string;
   created_at: string;
+  status?: UploadedMaterialRecord["status"];
+  error_message?: string | null;
+  processed_at?: string | null;
+  chunk_count?: number;
+  summary?: string | null;
+  source_metadata?: Record<string, unknown> | null;
+  deleted_at?: string | null;
 };
 
 function sortSessions(sessions: StudySessionRecord[]) {
@@ -63,6 +84,13 @@ function mapMaterialRow(row: StorageRow): UploadedMaterialRecord {
     fileType: row.file_type,
     storagePath: row.storage_path,
     createdAt: row.created_at,
+    status: row.status ?? "uploaded",
+    errorMessage: row.error_message ?? null,
+    processedAt: row.processed_at ?? null,
+    chunkCount: row.chunk_count ?? 0,
+    summary: row.summary ?? null,
+    sourceMetadata: row.source_metadata ?? {},
+    deletedAt: row.deleted_at ?? null,
   };
 }
 
@@ -79,7 +107,51 @@ function formatFileTypeLabel(fileType: string) {
     return "PDF";
   }
 
+  if (fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+    return "DOCX";
+  }
+
+  if (fileType === "application/vnd.openxmlformats-officedocument.presentationml.presentation") {
+    return "PPTX";
+  }
+
+  if (fileType === "text/plain") {
+    return "Text";
+  }
+
   return fileType;
+}
+
+function getStatusTone(status: UploadedMaterialRecord["status"]) {
+  if (status === "ready") {
+    return "border-emerald-300/20 bg-emerald-400/10 text-emerald-100";
+  }
+
+  if (status === "failed") {
+    return "border-red-300/20 bg-red-400/10 text-red-100";
+  }
+
+  if (status === "processing") {
+    return "border-cyan-300/20 bg-cyan-400/10 text-cyan-100";
+  }
+
+  return "border-white/10 bg-white/[0.04] text-slate-200";
+}
+
+function getStatusIcon(status: UploadedMaterialRecord["status"]) {
+  if (status === "ready") {
+    return <CheckCircle2 className="h-3.5 w-3.5" />;
+  }
+
+  if (status === "failed") {
+    return <AlertTriangle className="h-3.5 w-3.5" />;
+  }
+
+  if (status === "processing") {
+    return <Loader2 className="h-3.5 w-3.5 animate-spin" />;
+  }
+
+  return <Clock3 className="h-3.5 w-3.5" />;
 }
 
 export function UploadWorkspace() {
@@ -178,23 +250,20 @@ export function UploadWorkspace() {
       setLoadingMaterials(true);
       setError(null);
 
-      const { data, error: loadError } = await supabase
-        .from("uploaded_materials")
-        .select("id,user_id,session_id,file_name,file_type,storage_path,created_at")
-        .eq("session_id", activeSessionId)
-        .order("created_at", { ascending: false });
+      const response = await fetch(`/api/materials?sessionId=${encodeURIComponent(activeSessionId)}`);
+      const payload = (await response.json()) as MaterialsApiResponse;
 
       if (!isMounted) {
         return;
       }
 
-      if (loadError) {
-        setError(loadError.message);
+      if (!response.ok || !payload.success) {
+        setError(payload.error?.message ?? "Unable to load uploads.");
         setLoadingMaterials(false);
         return;
       }
 
-      setMaterials((data ?? []).map((row) => mapMaterialRow(row as StorageRow)));
+      setMaterials(payload.data?.materials ?? []);
       setLoadingMaterials(false);
     })();
 
@@ -235,17 +304,14 @@ export function UploadWorkspace() {
       return;
     }
 
-    const { data, error: loadError } = await supabase
-      .from("uploaded_materials")
-      .select("id,user_id,session_id,file_name,file_type,storage_path,created_at")
-      .eq("session_id", sessionId)
-      .order("created_at", { ascending: false });
+    const response = await fetch(`/api/materials?sessionId=${encodeURIComponent(sessionId)}`);
+    const payload = (await response.json()) as MaterialsApiResponse;
 
-    if (loadError) {
-      throw loadError;
+    if (!response.ok || !payload.success) {
+      throw new Error(payload.error?.message ?? "Unable to load uploads.");
     }
 
-    setMaterials((data ?? []).map((row) => mapMaterialRow(row as StorageRow)));
+    setMaterials(payload.data?.materials ?? []);
   }
 
   async function handleFiles(fileList: FileList | File[]) {
@@ -256,7 +322,7 @@ export function UploadWorkspace() {
 
     const files = Array.from(fileList).filter((file) => isAllowedUploadMimeType(file.type));
     if (files.length === 0) {
-      setError("Only PNG, JPG, WEBP, and PDF files are supported right now.");
+      setError("Supported files: PDF, DOCX, PPTX, TXT, PNG, JPG, JPEG, and WEBP.");
       return;
     }
 
@@ -286,12 +352,23 @@ export function UploadWorkspace() {
             file_type: file.type || "application/octet-stream",
             storage_path: storagePath,
           })
-          .select("id,user_id,session_id,file_name,file_type,storage_path,created_at")
+          .select("id,user_id,session_id,file_name,file_type,storage_path,created_at,status,error_message,processed_at,chunk_count,summary,source_metadata,deleted_at")
           .single();
 
         if (insertError || !insertedRow) {
           await supabase.storage.from(UPLOADED_MATERIALS_BUCKET).remove([storagePath]);
           throw insertError ?? new Error("Unable to save upload metadata.");
+        }
+
+        setMaterials((current) => sortMaterials([mapMaterialRow(insertedRow as StorageRow), ...current.filter((item) => item.id !== insertedRow.id)]));
+
+        const processResponse = await fetch(`/api/materials/${insertedRow.id}/process`, {
+          method: "POST",
+        });
+        const processPayload = (await processResponse.json()) as MaterialsApiResponse;
+
+        if (!processResponse.ok || !processPayload.success) {
+          setError(processPayload.error?.message ?? `${file.name} uploaded, but processing failed.`);
         }
       }
 
@@ -316,17 +393,42 @@ export function UploadWorkspace() {
   }
 
   async function handleOpenMaterial(material: UploadedMaterialRecord) {
-    if (!supabase) {
+    const response = await fetch(`/api/materials/${material.id}/view`, { method: "POST" });
+    const payload = (await response.json()) as MaterialsApiResponse;
+
+    if (!response.ok || !payload.success || !payload.data?.signedUrl) {
+      setError(payload.error?.message || "Unable to open the file.");
       return;
     }
 
-    const { data, error: signedUrlError } = await supabase.storage.from(UPLOADED_MATERIALS_BUCKET).createSignedUrl(material.storagePath, 60 * 10);
-    if (signedUrlError || !data?.signedUrl) {
-      setError(signedUrlError?.message || "Unable to open the file.");
+    window.open(payload.data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function handleDeleteMaterial(material: UploadedMaterialRecord) {
+    const response = await fetch(`/api/materials/${material.id}`, { method: "DELETE" });
+    const payload = (await response.json()) as MaterialsApiResponse;
+
+    if (!response.ok || !payload.success) {
+      setError(payload.error?.message || "Unable to delete the file.");
       return;
     }
 
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    setMaterials((current) => current.filter((item) => item.id !== material.id));
+  }
+
+  async function handleReprocessMaterial(material: UploadedMaterialRecord) {
+    setMaterials((current) => current.map((item) => (item.id === material.id ? { ...item, status: "processing", errorMessage: null } : item)));
+
+    const response = await fetch(`/api/materials/${material.id}/process`, { method: "POST" });
+    const payload = (await response.json()) as MaterialsApiResponse;
+
+    if (!response.ok || !payload.success) {
+      setError(payload.error?.message || "Unable to reprocess the file.");
+    }
+
+    if (activeSessionId) {
+      await refreshMaterials(activeSessionId);
+    }
   }
 
   return (
@@ -334,8 +436,8 @@ export function UploadWorkspace() {
       <aside className="hidden h-full min-h-0 w-[20rem] shrink-0 flex-col rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 shadow-glow lg:flex">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Materials</p>
-            <h2 className="mt-2 text-lg font-semibold text-white">Cross-device uploads</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">My materials</p>
+            <h2 className="mt-2 text-lg font-semibold text-white">Document library</h2>
           </div>
           <Button type="button" size="icon" onClick={() => createSession()} aria-label="New upload session">
             <Plus className="h-4 w-4" />
@@ -373,10 +475,10 @@ export function UploadWorkspace() {
       <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
         <div className="flex shrink-0 flex-col gap-4 border-b border-white/10 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Upload workspace</p>
-            <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">Store files inside your study sessions</h1>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">My materials</p>
+            <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">Teach EduAgent from your study files</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-              Upload screenshots, slides, and PDFs into a session so the same materials appear on every device where you sign in.
+              Upload notes, slides, PDFs, documents, and images. EduAgent extracts, chunks, embeds, and links them to your tutoring sessions.
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-400">
@@ -406,7 +508,7 @@ export function UploadWorkspace() {
               Drop files here
             </CardTitle>
             <CardDescription>
-              PNG, JPG, WEBP, and PDF files are stored in Supabase Storage and linked to the current session.
+              PDF, DOCX, PPTX, TXT, PNG, JPG, JPEG, and WEBP files are stored privately, processed, and made searchable for tutoring.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -417,7 +519,7 @@ export function UploadWorkspace() {
               <div className="max-w-xl space-y-2">
                 <p className="text-base font-medium text-white">{activeSession ? activeSession.title : "Create or pick a session first"}</p>
                 <p className="text-sm leading-6 text-slate-400">
-                  Drag files in, or choose them manually. The upload metadata, session link, and storage path are saved so you can reopen them later on another device.
+                  Drag files in, or choose them manually. EduAgent will process them into searchable learning chunks after upload.
                 </p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
@@ -434,7 +536,7 @@ export function UploadWorkspace() {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept="image/png,image/jpeg,image/webp,application/pdf"
+                accept={getAcceptedUploadMimeTypes()}
                 className="hidden"
                 onChange={(event) => {
                   if (event.target.files) {
@@ -464,15 +566,40 @@ export function UploadWorkspace() {
                   {activeMaterials.map((material) => (
                     <div key={material.id} className="rounded-[1.5rem] border border-white/10 bg-slate-950/30 p-4">
                       <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-medium text-white">{material.fileName}</p>
-                          <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-400">{formatFileTypeLabel(material.fileType)}</p>
-                          <p className="mt-2 text-xs text-slate-500">Uploaded {new Date(material.createdAt).toLocaleString()}</p>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-cyan-200">
+                              <FileText className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-white">{material.fileName}</p>
+                              <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-400">{formatFileTypeLabel(material.fileType)}</p>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs ${getStatusTone(material.status)}`}>
+                              {getStatusIcon(material.status)}
+                              {material.status}
+                            </span>
+                            <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-xs text-slate-300">
+                              {material.chunkCount} chunk{material.chunkCount === 1 ? "" : "s"}
+                            </span>
+                            <span className="text-xs text-slate-500">Uploaded {new Date(material.createdAt).toLocaleString()}</span>
+                          </div>
+                          {material.summary ? <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-400">{material.summary}</p> : null}
+                          {material.errorMessage ? <p className="mt-3 text-sm leading-6 text-red-200">{material.errorMessage}</p> : null}
                         </div>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => void handleOpenMaterial(material)}>
-                          <ExternalLink className="h-4 w-4" />
-                          Open
-                        </Button>
+                        <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                          <Button type="button" variant="ghost" size="icon" onClick={() => void handleOpenMaterial(material)} aria-label={`Open ${material.fileName}`}>
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => void handleReprocessMaterial(material)} aria-label={`Reprocess ${material.fileName}`}>
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => void handleDeleteMaterial(material)} aria-label={`Delete ${material.fileName}`} className="text-red-200 hover:bg-red-500/10 hover:text-red-100">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}

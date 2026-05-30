@@ -26,7 +26,7 @@ async function fetchSessionForUser(supabase: Awaited<ReturnType<typeof createSup
 async function fetchSessionWithMessages(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, sessionId: string, userId: string) {
   const { data, error } = await supabase
     .from("study_sessions")
-    .select("id,title,topic_category,last_message,created_at,updated_at,study_messages(id,role,content,created_at)")
+    .select("id,title,topic_category,last_message,created_at,updated_at,study_messages(id,role,content,created_at,sources)")
     .eq("id", sessionId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -179,13 +179,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const aiMessage = await getAIResponse(messages);
+    const aiMessage = await getAIResponse(messages, {
+      userId: user.id,
+      sessionId: session.id,
+    });
 
     const { error: assistantMessageError } = await supabase.from("study_messages").insert({
       session_id: session.id,
       user_id: user.id,
       role: "assistant",
       content: aiMessage.content,
+      sources: aiMessage.sources ?? [],
     });
 
     if (assistantMessageError) {

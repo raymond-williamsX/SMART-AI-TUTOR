@@ -29,23 +29,68 @@ function authHeader(): string {
   return `ApiKey ${key}`;
 }
 
-export async function searchIndex(index: string, body: unknown) {
+async function elasticRequest(path: string, init: RequestInit = {}) {
   const endpoint = getEndpoint();
-  const url = `${endpoint.replace(/\/+$/g, "")}/${encodeURIComponent(index)}/_search`;
+  const url = `${endpoint.replace(/\/+$/g, "")}/${path.replace(/^\/+/g, "")}`;
 
   const res = await fetch(url, {
-    method: "POST",
+    ...init,
     headers: {
       "Content-Type": "application/json",
       Authorization: authHeader(),
+      ...(init.headers ?? {}),
     },
-    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`Elastic search failed: ${res.status} ${res.statusText} ${text}`);
+    throw new Error(`Elastic request failed: ${res.status} ${res.statusText} ${text}`);
   }
 
-  return res.json();
+  if (res.status === 204) {
+    return null;
+  }
+
+  return res.json().catch(() => null);
+}
+
+export async function searchIndex(index: string, body: unknown) {
+  return elasticRequest(`${encodeURIComponent(index)}/_search`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function createIndexIfMissing(index: string, body: unknown) {
+  const encodedIndex = encodeURIComponent(index);
+
+  try {
+    await elasticRequest(encodedIndex, { method: "HEAD" });
+    return;
+  } catch {
+    await elasticRequest(encodedIndex, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+  }
+}
+
+export async function indexDocument(index: string, id: string, body: unknown) {
+  return elasticRequest(`${encodeURIComponent(index)}/_doc/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteByQuery(index: string, body: unknown) {
+  return elasticRequest(`${encodeURIComponent(index)}/_delete_by_query?conflicts=proceed&refresh=true`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function refreshIndex(index: string) {
+  return elasticRequest(`${encodeURIComponent(index)}/_refresh`, {
+    method: "POST",
+  });
 }

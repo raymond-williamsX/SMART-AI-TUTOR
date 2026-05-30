@@ -73,6 +73,7 @@ function toChatMessage(message: StudySessionRecord["messages"][number]): ChatMes
     role: message.role,
     content: message.content,
     timestamp: new Date(message.createdAt).getTime(),
+    sources: message.sources ?? [],
   };
 }
 
