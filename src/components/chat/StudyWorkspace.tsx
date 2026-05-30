@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, Clock3, LogOut, Menu, Plus, Search } from "lucide-react";
+import { ArrowDown, Clock3, LogOut, Plus, Search, X } from "lucide-react";
+import Image from "next/image";
 
 import { ChatInput } from "./ChatInput";
 import { ChatMessage as ChatMessageComponent } from "./ChatMessage";
@@ -14,6 +15,7 @@ import { DEFAULT_STUDY_SESSION_TITLE } from "@/lib/study-sessions/title";
 import type { StudySessionRecord } from "@/lib/study-sessions/types";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useShellUi } from "@/components/layout/shell-ui-context";
 
 type ApiErrorResponse = {
   code: string;
@@ -89,13 +91,13 @@ function getPreview(session: StudySessionRecord) {
 export function StudyWorkspace() {
   const router = useRouter();
   const { user, ready, loading: authLoading, signOut } = useAuth();
+  const { sessionsOpen, closeSessions } = useShellUi();
   const [sessions, setSessions] = useState<StudySessionRecord[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mobileSessionsOpen, setMobileSessionsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
@@ -265,7 +267,7 @@ export function StudyWorkspace() {
 
     try {
       await createSession();
-      setMobileSessionsOpen(false);
+      closeSessions();
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : "Unable to create a study session.");
     }
@@ -339,164 +341,16 @@ export function StudyWorkspace() {
   }
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden lg:flex-row">
-      <div className="flex shrink-0 items-center justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-3 shadow-glow lg:hidden">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study sessions</p>
-          <p className="mt-1 text-sm text-slate-100">{activeSession?.title ?? "Start a session"}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="ghost" size="icon" onClick={() => setMobileSessionsOpen((current) => !current)} aria-label="Toggle sessions">
-            <Menu className="h-4 w-4" />
-          </Button>
-          <Button type="button" size="icon" onClick={handleNewSession} aria-label="New session" disabled={loadingSessions || authLoading}>
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      <aside className="hidden h-full min-h-0 w-[19rem] shrink-0 flex-col rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 shadow-glow lg:flex">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study sessions</p>
-            <h2 className="mt-2 text-lg font-semibold text-white">Resumable workspace</h2>
-          </div>
-          <Button type="button" size="icon" onClick={handleNewSession} aria-label="New session">
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="mt-4 flex items-center gap-2 rounded-[1.25rem] border border-white/10 bg-slate-950/40 px-3 py-2">
-          <Search className="h-4 w-4 text-slate-400" />
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search sessions"
-            className="border-0 bg-transparent px-0 text-sm text-slate-100 placeholder:text-slate-500 focus-visible:ring-0"
-          />
-        </div>
-
-        <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-          {showSessionListLoading ? (
-            <div className="rounded-[1.25rem] border border-dashed border-white/10 p-4 text-sm text-slate-400">Loading sessions...</div>
-          ) : filteredSessions.length > 0 ? (
-            filteredSessions.map((session) => (
-              <button
-                key={session.id}
-                type="button"
-                onClick={() => {
-                  setActiveSessionId(session.id);
-                  setMobileSessionsOpen(false);
-                }}
-                className={`w-full rounded-[1.5rem] border px-3 py-3 text-left transition-colors ${
-                  session.id === activeSessionId ? "border-cyan-300/25 bg-cyan-400/10" : "border-white/8 bg-white/[0.02] hover:bg-white/[0.05]"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-100">{session.title}</p>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{getPreview(session)}</p>
-                  </div>
-                  <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-                </div>
-              </button>
-            ))
-          ) : (
-            <div className="rounded-[1.25rem] border border-dashed border-white/10 p-4 text-sm text-slate-400">No sessions yet. Create one to begin.</div>
-          )}
-        </div>
-      </aside>
-
-      {mobileSessionsOpen ? (
-        <div className="fixed inset-0 z-30 bg-slate-950/80 p-4 backdrop-blur-sm lg:hidden">
-          <div className="mx-auto flex h-full w-full max-w-md flex-col rounded-[2rem] border border-white/10 bg-slate-950 p-4 shadow-2xl">
-            <div className="flex shrink-0 items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study sessions</p>
-                <h2 className="mt-2 text-lg font-semibold text-white">Session history</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button type="button" size="icon" onClick={handleNewSession} aria-label="New session" disabled={loadingSessions || authLoading}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-                <Button type="button" variant="ghost" size="icon" onClick={() => setMobileSessionsOpen(false)} aria-label="Close sessions">
-                  <Menu className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center gap-2 rounded-[1.25rem] border border-white/10 bg-slate-950/40 px-3 py-2">
-              <Search className="h-4 w-4 text-slate-400" />
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search sessions"
-                className="border-0 bg-transparent px-0 text-sm text-slate-100 placeholder:text-slate-500 focus-visible:ring-0"
-              />
-            </div>
-
-            <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-              {showSessionListLoading ? (
-                <div className="rounded-[1.25rem] border border-dashed border-white/10 p-4 text-sm text-slate-400">Loading sessions...</div>
-              ) : filteredSessions.length > 0 ? (
-                filteredSessions.map((session) => (
-                  <button
-                    key={session.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveSessionId(session.id);
-                      setMobileSessionsOpen(false);
-                    }}
-                    className={`w-full rounded-[1.5rem] border px-3 py-3 text-left transition-colors ${
-                      session.id === activeSessionId ? "border-cyan-300/25 bg-cyan-400/10" : "border-white/8 bg-white/[0.02] hover:bg-white/[0.05]"
-                    }`}
-                  >
-                    <p className="truncate text-sm font-medium text-slate-100">{session.title}</p>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{getPreview(session)}</p>
-                  </button>
-                ))
-              ) : (
-                <div className="rounded-[1.25rem] border border-dashed border-white/10 p-4 text-sm text-slate-400">No sessions yet. Create one to begin.</div>
-              )}
-            </div>
-
-            <div className="mt-4 border-t border-white/10 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-start border-white/10 bg-white/5 text-slate-200 hover:bg-white/10"
-                onClick={async () => {
-                  await signOut();
-                  router.push("/login");
-                }}
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      <section className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-glow sm:p-6">
-        <div className="flex shrink-0 flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Study room</p>
-            <h1 className="mt-2 text-xl font-semibold text-white sm:text-2xl">{activeSession?.title ?? "Create your first study session"}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-              Ask a question, upload material, or continue a previous conversation. The transcript stays readable, spacious, and easy to scroll on mobile.
-            </p>
-          </div>
-        </div>
-
-        {error ? <div className="rounded-[1.5rem] border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-100">{error}</div> : null}
+    <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        {error ? <div className="mb-3 rounded-[1.25rem] border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-100">{error}</div> : null}
 
         <div
           ref={transcriptRef}
           onScroll={handleTranscriptScroll}
-          className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 pb-24 sm:p-6 sm:pb-28"
+          className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain px-0 pb-4 pt-1 sm:pb-5"
         >
-          <div className="flex flex-col gap-4">
+          <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
             {showLoadingShell ? (
               <div className="rounded-[1.5rem] border border-dashed border-slate-400/25 bg-slate-400/5 p-4 text-sm text-slate-400">
                 <div className="h-4 w-36 animate-pulse rounded-full bg-white/10" />
@@ -510,7 +364,7 @@ export function StudyWorkspace() {
             )) : null}
 
             {!showLoadingShell && (!activeSession || activeSession.messages.length === 0) ? (
-              <div className="mt-6 rounded-[1.75rem] border border-dashed border-slate-400/25 bg-slate-400/5 p-4 text-sm text-slate-400">
+              <div className="rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm text-slate-400">
                 <p className="mb-2 font-medium text-slate-200">Ready to help.</p>
                 <p className="mb-4 leading-7 text-slate-400">
                   Try a starter prompt or ask your own question. The tutor will answer with structured, step-by-step guidance.
@@ -563,7 +417,90 @@ export function StudyWorkspace() {
             <ChatInput onSend={handleSend} disabled={sending || loadingSessions || authLoading || !ready} />
           </div>
         </div>
-      </section>
+      </div>
+
+      {sessionsOpen ? (
+        <div className="fixed inset-0 z-40 lg:inset-auto lg:absolute lg:inset-y-0 lg:right-0 lg:z-30">
+          <button
+            type="button"
+            aria-label="Close study sessions"
+            onClick={closeSessions}
+            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+          />
+          <aside className="absolute inset-y-0 right-0 flex w-[min(92vw,24rem)] flex-col border-l border-white/10 bg-slate-950/95 px-4 py-5 shadow-[0_24px_80px_rgba(8,15,30,0.5)] backdrop-blur-2xl">
+            <div className="flex shrink-0 items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-cyan-500/10">
+                  <Image src="/assets/EduAgent%20AI%20Logo.png" alt="EduAgent AI" width={40} height={40} className="h-full w-full object-cover" />
+                </div>
+                <div>
+                  <p className="font-heading text-sm font-semibold text-white">Study sessions</p>
+                  <p className="text-xs text-slate-300">Pick up where you left off</p>
+                </div>
+              </div>
+              <Button type="button" variant="ghost" size="icon" onClick={closeSessions} aria-label="Close study sessions" className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 text-slate-200 hover:bg-white/10">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="mt-4 flex items-center gap-2 rounded-[1.25rem] border border-white/10 bg-slate-950/40 px-3 py-2">
+              <Search className="h-4 w-4 text-slate-400" />
+              <Input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search sessions"
+                className="border-0 bg-transparent px-0 text-sm text-slate-100 placeholder:text-slate-500 focus-visible:ring-0"
+              />
+            </div>
+
+            <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+              {showSessionListLoading ? (
+                <div className="rounded-[1.25rem] border border-dashed border-white/10 p-4 text-sm text-slate-400">Loading sessions...</div>
+              ) : filteredSessions.length > 0 ? (
+                filteredSessions.map((session) => (
+                  <button
+                    key={session.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveSessionId(session.id);
+                      closeSessions();
+                    }}
+                    className={`w-full rounded-[1.5rem] border px-3 py-3 text-left transition-colors ${
+                      session.id === activeSessionId ? "border-cyan-300/25 bg-cyan-400/10" : "border-white/8 bg-white/[0.02] hover:bg-white/[0.05]"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-slate-100">{session.title}</p>
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{getPreview(session)}</p>
+                      </div>
+                      <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="rounded-[1.25rem] border border-dashed border-white/10 p-4 text-sm text-slate-400">No sessions yet. Create one to begin.</div>
+              )}
+            </div>
+
+            <div className="mt-4 border-t border-white/10 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start border-white/10 bg-white/5 text-slate-200 hover:bg-white/10"
+                onClick={async () => {
+                  closeSessions();
+                  await signOut();
+                  router.push("/login");
+                }}
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+          </aside>
+        </div>
+      ) : null}
     </div>
   );
 }
