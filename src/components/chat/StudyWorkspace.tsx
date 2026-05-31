@@ -67,6 +67,36 @@ function sortSessions(sessions: StudySessionRecord[] = []) {
   return [...sessions].sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
 }
 
+function normalizeSession(session: any): StudySessionRecord {
+  const messages = Array.isArray(session?.messages)
+    ? session.messages
+    : Array.isArray(session?.study_messages)
+      ? session.study_messages.map((message: any) => ({
+          id: message.id,
+          role: message.role,
+          content: message.content,
+          createdAt: message.created_at,
+          sources: Array.isArray(message.sources) ? message.sources : [],
+        }))
+      : [];
+
+  return {
+    id: session.id,
+    title: session.title,
+    topicCategory: session.topicCategory ?? session.topic_category ?? "General",
+    lastMessage: session.lastMessage ?? session.last_message ?? "",
+    createdAt: session.createdAt ?? session.created_at ?? new Date().toISOString(),
+    updatedAt: session.updatedAt ?? session.updated_at ?? new Date().toISOString(),
+    messages: messages.map((message: any) => ({
+      id: message.id,
+      role: message.role,
+      content: message.content,
+      createdAt: message.createdAt ?? message.created_at ?? new Date().toISOString(),
+      sources: Array.isArray(message.sources) ? message.sources : [],
+    })),
+  };
+}
+
 function toChatMessage(message: StudySessionRecord["messages"][number]): ChatMessage {
   return {
     id: message.id,
@@ -78,7 +108,7 @@ function toChatMessage(message: StudySessionRecord["messages"][number]): ChatMes
 }
 
 function sessionToMessages(session: StudySessionRecord | null | undefined): ChatMessage[] {
-  if (!session || session.messages.length === 0) {
+  if (!session || !Array.isArray(session.messages) || session.messages.length === 0) {
     return [WELCOME_MESSAGE];
   }
 
@@ -175,7 +205,7 @@ export function StudyWorkspace() {
           throw new Error(payload.error?.message || "Unable to load study sessions.");
         }
 
-        const nextSessions = sortSessions(payload.data?.sessions ?? []);
+        const nextSessions = sortSessions((payload.data?.sessions ?? []).map(normalizeSession));
         setSessions(nextSessions);
         setActiveSessionId((current) => {
           if (current && nextSessions.some((session) => session.id === current)) {
@@ -203,11 +233,12 @@ export function StudyWorkspace() {
   }, [ready, user]);
 
   function upsertSession(session: StudySessionRecord) {
+    const normalizedSession = normalizeSession(session);
     setSessions((current) => {
-      const withoutCurrent = current.filter((item) => item.id !== session.id);
-      return sortSessions([session, ...withoutCurrent]);
+      const withoutCurrent = current.filter((item) => item.id !== normalizedSession.id);
+      return sortSessions([normalizedSession, ...withoutCurrent]);
     });
-    setActiveSessionId(session.id);
+    setActiveSessionId(normalizedSession.id);
   }
 
   function appendMessage(sessionId: string, message: ChatMessage) {
@@ -229,6 +260,7 @@ export function StudyWorkspace() {
                 role: message.role,
                 content: message.content,
                 createdAt: new Date(message.timestamp).toISOString(),
+                sources: message.sources ?? [],
               },
             ],
           };
