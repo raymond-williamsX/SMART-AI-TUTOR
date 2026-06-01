@@ -9,9 +9,11 @@ export type SupabaseCookieStore = {
   setAll: (cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) => void;
 };
 
+type SupabaseServerClient = ReturnType<typeof createServerClient>;
+
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
-export async function createSupabaseServerClient(cookieStore?: SupabaseCookieStore) {
+export async function createSupabaseServerClient(cookieStore?: SupabaseCookieStore): Promise<SupabaseServerClient> {
   const supabaseUrl = getSupabaseUrl();
   const supabaseAnonKey = getSupabaseKey();
 
@@ -27,7 +29,7 @@ export async function createSupabaseServerClient(cookieStore?: SupabaseCookieSto
           error: null,
         }),
       },
-    } as any;
+    } as unknown as SupabaseServerClient;
   }
 
   const nextHeadersCookieStore = await cookies();
