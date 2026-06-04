@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, Brain, CheckCircle2, FileText, Mic, PlayCircle, ShieldCheck, Sparkles, UploadCloud } from "lucide-react";
+import Image from "next/image";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { ArrowRight, BookOpen, Brain, CheckCircle2, FileText, Mic, ShieldCheck, UploadCloud } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Modal } from "@/components/ui/modal";
+import { LoginForm } from "@/components/auth/login-form";
+import { SignupForm } from "@/components/auth/signup-form";
 
 const features = [
   { icon: Brain, title: "AI tutoring", description: "Ask anything and get clear, structured explanations tailored to your pace." },
@@ -17,267 +20,174 @@ const features = [
   { icon: BookOpen, title: "Study plans", description: "Create personalized study paths for exams, assignments, and skill-building." },
 ];
 
-const steps = [
-  { title: "Upload or ask", body: "Drop in a document or start with a question. EduAgent adapts instantly." },
-  { title: "Learn interactively", body: "Get explanations, examples, quizzes, and follow-up guidance in one flow." },
-  { title: "Continue anytime", body: "Pick up your progress from any device with session persistence." },
-];
-
 export default function HomePage() {
+  const [activeModal, setActiveModal] = useState<"login" | "signup" | null>(null);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const auth = searchParams.get("auth");
+    if (auth === "login") setActiveModal("login");
+    if (auth === "signup") setActiveModal("signup");
+  }, [searchParams]);
+
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-[-10%] top-[-10%] h-80 w-80 rounded-full bg-cyan-400/15 blur-3xl" />
-        <div className="absolute right-[-12%] top-20 h-96 w-96 rounded-full bg-sky-500/10 blur-3xl" />
-        <div className="absolute bottom-[-15%] left-1/3 h-96 w-96 rounded-full bg-cyan-300/8 blur-3xl" />
-      </div>
-
-      <section className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-20 pt-6 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between gap-4 pb-10">
+    <main className="min-h-screen bg-[#0a0a0a] text-slate-200 selection:bg-cyan-500/30 font-body">
+      {/* Floating Navigation */}
+      <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-7xl z-50 rounded-2xl border border-white/10 bg-[#0a0a0a]/50 backdrop-blur-xl mix-blend-plus-lighter shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-300 to-sky-500 text-slate-950 shadow-lg shadow-cyan-400/20">
-              <Sparkles className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500 text-black">
+              <Brain className="h-6 w-6" />
             </div>
-            <div>
-              <p className="font-heading text-sm font-semibold tracking-wide text-white">EduAgent AI</p>
-              <p className="text-xs text-slate-400">Your personal AI tutor</p>
-            </div>
+            <span className="font-heading font-semibold text-white tracking-tight text-xl">EduAgent</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Button asChild variant="outline" className="border-white/10 bg-white/5 text-slate-200 hover:bg-white/10">
-              <Link href="/login">Sign in</Link>
-            </Button>
-            <Button asChild className="shadow-[0_16px_40px_rgba(34,211,238,0.18)]">
-              <Link href="/signup">
-                Get started
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+          <div className="hidden md:flex items-center gap-6">
+            <Link href="#how-it-works" className="text-slate-300 hover:text-white font-medium transition-colors text-base">How it works</Link>
+            <Link href="#features" className="text-slate-300 hover:text-white font-medium transition-colors text-base">Features</Link>
           </div>
-        </header>
-
-        <div className="grid flex-1 items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
-          <div className="space-y-8">
-            <Badge className="border-cyan-300/20 bg-cyan-300/10 text-cyan-100">Premium AI tutoring SaaS</Badge>
-            <div className="space-y-5">
-              <motion.h1
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.55 }}
-                className="max-w-3xl font-heading text-5xl font-semibold tracking-tight text-white text-balance sm:text-6xl"
-              >
-                Your personal AI tutor that actually teaches.
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.55, delay: 0.08 }}
-                className="max-w-2xl text-base leading-8 text-slate-300 sm:text-lg"
-              >
-                Ask questions, upload study material, build smart revision plans, and keep every learning session organized in one premium workspace.
-              </motion.p>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.14 }}
-              className="flex flex-wrap gap-3"
-            >
-              <Button asChild size="lg" className="shadow-[0_20px_60px_rgba(34,211,238,0.22)]">
-                <Link href="/chat">
-                  Start studying
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-4 ml-4">
+              <button onClick={() => setActiveModal("login")} className="text-slate-300 hover:text-white font-medium transition-colors text-base">Sign in</button>
+              <Button onClick={() => setActiveModal("signup")} className="bg-white text-black hover:bg-slate-200 rounded-full px-6 h-11 text-base font-medium">
+                Get started <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/10 bg-white/5 text-slate-200 hover:bg-white/10">
-                <Link href="#how-it-works">
-                  <PlayCircle className="h-4 w-4" />
-                  See how it works
-                </Link>
-              </Button>
-            </motion.div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                ["24/7", "AI study support"],
-                ["PDF + chat", "Document tutoring"],
-                ["Supabase", "Saved sessions"],
-              ].map(([value, label]) => (
-                <div key={label} className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-glow">
-                  <p className="font-heading text-2xl font-semibold text-white">{value}</p>
-                  <p className="mt-1 text-sm text-slate-400">{label}</p>
-                </div>
-              ))}
             </div>
           </div>
+        </div>
+      </nav>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.12 }}
-            className="relative"
-          >
-            <div className="absolute -inset-6 rounded-[2rem] bg-cyan-400/10 blur-3xl" />
-            <Card className="relative overflow-hidden border-white/10 bg-white/[0.04] shadow-2xl shadow-slate-950/50">
-              <CardContent className="space-y-4 p-5 sm:p-6">
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Live tutor</p>
-                    <p className="mt-1 text-sm font-medium text-white">Study session active</p>
-                  </div>
-                  <div className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs text-cyan-100">Gemini powered</div>
-                </div>
-
-                <div className="rounded-[1.75rem] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4">
-                  <div className="space-y-3 text-sm leading-7 text-slate-300">
-                    <p><span className="text-cyan-200">You:</span> Explain photosynthesis simply.</p>
-                    <p><span className="text-cyan-200">EduAgent:</span> Plants use sunlight, water, and carbon dioxide to make sugar, like a solar-powered kitchen.</p>
-                    <p><span className="text-cyan-200">You:</span> Give me a 7-day revision plan.</p>
-                    <p><span className="text-cyan-200">EduAgent:</span> Absolutely. I’ll break it into daily concepts, practice, and review loops.</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {[
-                    "Smart session memory",
-                    "Voice-ready tutoring",
-                    "Real-time explanations",
-                    "Multi-device sync",
-                  ].map((item) => (
-                    <div key={item} className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
-                      <CheckCircle2 className="h-4 w-4 text-cyan-300" />
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+      {/* Hero Section */}
+      <section className="relative mx-auto max-w-7xl px-6 pt-48 pb-20 text-center">
+        <h1 className="font-heading text-6xl sm:text-7xl lg:text-8xl font-medium tracking-tight text-white mb-8 text-balance">
+          Learn <span className="text-cyan-400">smarter</span>, not harder.
+        </h1>
+        <p className="mx-auto max-w-3xl text-xl sm:text-2xl text-slate-400 mb-12 text-balance leading-relaxed">
+          Ask questions, upload study material, build smart revision plans, and keep every learning session organized in one workspace. No fluff, just results.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-24">
+          <Button onClick={() => setActiveModal("signup")} className="bg-white text-black hover:bg-slate-200 rounded-full px-10 h-14 text-lg font-medium w-full sm:w-auto">
+            Start studying <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+          <Button variant="outline" className="border-white/10 bg-[#141414] hover:bg-[#1f1f1f] text-white rounded-full px-10 h-14 text-lg font-medium w-full sm:w-auto transition-colors">
+            Read docs
+          </Button>
+        </div>
+        
+        {/* Dashboard Image Mockup */}
+        <div className="relative mx-auto max-w-5xl rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.8)]">
+           <Image
+             src="/dashboard-mockup.png"
+             alt="EduAgent Dashboard"
+             width={2048}
+             height={1366}
+             className="w-full h-auto object-cover"
+             priority
+           />
         </div>
       </section>
 
-      <section id="features" className="relative mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-end justify-between gap-4">
+      {/* Core Principles */}
+      <section id="how-it-works" className="border-t border-white/5 bg-[#0a0a0a] py-32">
+        <div className="mx-auto max-w-7xl px-6 grid lg:grid-cols-2 gap-20 items-center">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/80">Features</p>
-            <h2 className="mt-2 font-heading text-3xl font-semibold text-white">Everything a premium tutor should feel like.</h2>
+            <h2 className="font-heading text-5xl sm:text-6xl font-medium text-white leading-tight mb-8">
+              Study sessions should be intuitive, fast, and structured.
+            </h2>
+            <p className="text-2xl text-slate-400 leading-relaxed pl-8 border-l-2 border-cyan-500/30">
+              EduAgent gives you scalable learning without the friction. Just upload and start conversing.
+            </p>
+          </div>
+          
+          <div className="grid gap-8">
+            <div className="bg-[#141414] border border-white/5 rounded-3xl p-10 hover:border-cyan-500/30 transition-colors">
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
+                <UploadCloud className="h-7 w-7" />
+              </div>
+              <h3 className="text-3xl font-medium text-white mb-4">Document learning</h3>
+              <p className="text-slate-400 text-xl leading-relaxed">Stable, fast parsing for your lecture slides and PDF notes.</p>
+            </div>
+            
+            <div className="bg-[#141414] border border-white/5 rounded-3xl p-10 hover:border-cyan-500/30 transition-colors">
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
+                <CheckCircle2 className="h-7 w-7" />
+              </div>
+              <h3 className="text-3xl font-medium text-white mb-4">Structured guidance</h3>
+              <p className="text-slate-400 text-xl leading-relaxed">Clear answers, quizzes, and follow-ups. No rambling AI.</p>
+            </div>
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      </section>
+
+      {/* Features Grid */}
+      <section id="features" className="mx-auto max-w-7xl px-6 py-32 border-t border-white/5">
+        <div className="mb-20 text-center sm:text-left">
+          <h2 className="font-heading text-4xl sm:text-5xl font-medium text-white">Everything a premium tutor should feel like.</h2>
+        </div>
+        <div className="grid gap-10 md:grid-cols-2 xl:grid-cols-3">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
-              <Card key={feature.title} className="border-white/10 bg-white/[0.04] shadow-glow">
-                <CardContent className="p-5">
-                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-300/10 text-cyan-100">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-white">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-7 text-slate-400">{feature.description}</p>
-                </CardContent>
-              </Card>
+              <div key={feature.title} className="bg-transparent group p-2">
+                <div className="mb-6 text-cyan-400 opacity-80 group-hover:opacity-100 transition-opacity">
+                  <Icon className="h-8 w-8" />
+                </div>
+                <h3 className="text-2xl font-medium text-white mb-3">{feature.title}</h3>
+                <p className="text-slate-400 text-lg leading-relaxed">{feature.description}</p>
+              </div>
             );
           })}
         </div>
       </section>
 
-      <section id="how-it-works" className="relative mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/80">How it works</p>
-            <h2 className="mt-2 font-heading text-3xl font-semibold text-white">A simple flow designed for momentum, not friction.</h2>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {steps.map((step, index) => (
-              <Card key={step.title} className="border-white/10 bg-white/[0.04] shadow-glow">
-                <CardContent className="p-5">
-                  <p className="text-xs uppercase tracking-[0.28em] text-slate-500">0{index + 1}</p>
-                  <h3 className="mt-3 text-lg font-semibold text-white">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-7 text-slate-400">{step.body}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      {/* CTA Section */}
+      <section className="mx-auto max-w-7xl px-6 py-32 border-t border-white/5 text-center">
+        <h2 className="font-heading text-5xl sm:text-6xl lg:text-7xl font-medium tracking-tight text-white mb-8 text-balance">
+          Ready to ace it?
+        </h2>
+        <p className="mx-auto max-w-2xl text-xl sm:text-2xl text-slate-400 mb-12 text-balance leading-relaxed">
+          Join today and experience the most intuitive AI tutoring platform built for actual studying.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Button onClick={() => setActiveModal("signup")} className="bg-cyan-500 text-slate-950 hover:bg-cyan-400 rounded-full px-10 h-14 text-lg font-medium w-full sm:w-auto">
+            Get started for free
+          </Button>
         </div>
       </section>
 
-      <section className="relative mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <Card className="overflow-hidden border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.02] shadow-2xl shadow-slate-950/50">
-          <CardContent className="grid gap-6 p-6 lg:grid-cols-[1fr_0.9fr] lg:gap-8 lg:p-8">
-            <div className="space-y-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/80">Premium showcase</p>
-              <h2 className="font-heading text-3xl font-semibold text-white">Designed like a funded AI product, not a school project.</h2>
-              <p className="max-w-xl text-sm leading-7 text-slate-400">
-                Clean typography, glass layers, cyan glows, and responsive surfaces all tuned for a high-end tutoring experience.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {[
-                "Immersive chat workspace",
-                "Adaptive dashboard shell",
-                "Saved study sessions",
-                "Upload-driven tutoring",
-              ].map((item) => (
-                <div key={item} className="rounded-3xl border border-white/10 bg-slate-950/40 px-4 py-4 text-sm text-slate-300">
-                  {item}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="relative mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <Card className="border-white/10 bg-white/[0.04] shadow-glow">
-          <CardContent className="grid gap-4 p-6 lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/80">Student outcomes</p>
-              <h2 className="mt-2 font-heading text-3xl font-semibold text-white">Realistic tutoring moments that feel personal.</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
-                From homework rescue to exam prep, EduAgent AI keeps the interaction focused, encouraging, and concrete.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3 lg:max-w-2xl">
-              {[
-                "I finally understood algebra in one session.",
-                "The study plan kept me on track all week.",
-                "I could revisit the same lesson on my phone later.",
-              ].map((quote) => (
-                <div key={quote} className="rounded-3xl border border-white/10 bg-slate-950/40 p-4 text-sm leading-7 text-slate-300">
-                  “{quote}”
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="relative mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card className="border-cyan-300/15 bg-gradient-to-r from-cyan-300/10 to-sky-400/5 shadow-[0_24px_80px_rgba(34,211,238,0.12)]">
-          <CardContent className="flex flex-col items-start justify-between gap-6 p-6 sm:flex-row sm:items-center lg:p-8">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-cyan-100">Ready to learn?</p>
-              <h2 className="mt-2 font-heading text-3xl font-semibold text-white">Start a study session in seconds.</h2>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="shadow-[0_20px_60px_rgba(34,211,238,0.22)]">
-                <Link href="/chat">Open chat</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/10 bg-white/5 text-slate-200 hover:bg-white/10">
-                <Link href="/signup">Create account</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <footer className="relative mx-auto w-full max-w-7xl px-4 pb-12 pt-4 text-sm text-slate-500 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p>EduAgent AI · Premium tutoring SaaS</p>
-          <p>Gemini · ElasticSearch · Supabase Auth · Vercel</p>
+      {/* Footer */}
+      <footer className="border-t border-white/5 bg-[#0a0a0a] py-16">
+        <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-10 text-base">
+          <div className="flex items-center gap-3">
+            <Brain className="h-6 w-6 text-cyan-500" />
+            <span className="font-heading font-medium text-white text-lg">EduAgent</span>
+          </div>
+          <div className="text-slate-500 max-w-md text-lg">
+            Upload, read, and learn from one workspace without managing scattered files, lost prompts, or context windows.
+          </div>
+          <div className="flex gap-8 text-slate-400">
+            <Link href="#" className="hover:text-white transition-colors">Terms</Link>
+            <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
+          </div>
+        </div>
+        <div className="mx-auto max-w-7xl px-6 mt-16 text-slate-600 text-sm">
+          © {new Date().getFullYear()} EduAgent AI. All rights reserved.
         </div>
       </footer>
+
+      {/* Auth Modals */}
+      <Modal isOpen={activeModal === "login"} onClose={() => setActiveModal(null)}>
+        <LoginForm 
+          onSwitchToSignup={() => setActiveModal("signup")} 
+          redirectTo="/dashboard" 
+        />
+      </Modal>
+
+      <Modal isOpen={activeModal === "signup"} onClose={() => setActiveModal(null)}>
+        <SignupForm 
+          onSwitchToLogin={() => setActiveModal("login")} 
+          redirectTo="/dashboard" 
+        />
+      </Modal>
     </main>
   );
 }
