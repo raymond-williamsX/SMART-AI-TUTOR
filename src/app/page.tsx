@@ -139,38 +139,63 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="mx-auto max-w-7xl px-6 py-32 border-t border-white/5 text-center">
-        <h2 className="font-heading text-5xl sm:text-6xl lg:text-7xl font-medium tracking-tight text-white mb-8 text-balance">
-          Ready to ace it?
-        </h2>
-        <p className="mx-auto max-w-2xl text-xl sm:text-2xl text-slate-400 mb-12 text-balance leading-relaxed">
-          Join today and experience the most intuitive AI tutoring platform built for actual studying.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button onClick={() => setActiveModal("signup")} className="bg-cyan-500 text-slate-950 hover:bg-cyan-400 rounded-full px-10 h-14 text-lg font-medium w-full sm:w-auto">
-            Get started for free
-          </Button>
+      {/* CTA & Footer Section */}
+      <footer className="bg-[#0a0a0a] pt-32">
+        <div className="relative overflow-hidden h-[240px] flex justify-center items-center border-y border-white/5">
+          <div className="w-[2000px] md:w-[4000px] h-[800px] absolute -top-[720px] left-1/2 -translate-x-1/2 bg-gradient-to-b from-[#0a0a0a] via-[#141414] to-cyan-500/10 rounded-[100%]"></div>
+          <div className="w-20 md:w-80 h-10 bg-gradient-to-l from-cyan-500/20 via-cyan-500/10 to-transparent blur-[4.95px] absolute top-1/2 -translate-y-1/2 right-[56%]"></div>
+          <div className="w-20 md:w-80 h-10 bg-gradient-to-r from-cyan-500/20 via-cyan-500/10 to-transparent blur-[4.95px] absolute top-1/2 -translate-y-1/2 left-[56%]"></div>
+          <div className="absolute top-1/2 -translate-y-1/2 right-1/2 w-[300px] md:w-[1000px] h-[70px] md:h-[140px] bg-gradient-to-l from-cyan-500/10 via-cyan-500/5 to-transparent blur-[60px] [clip-path:polygon(100%_50%,0_0,0_100%)] pointer-events-none z-0"></div>
+          <div className="absolute top-1/2 -translate-y-1/2 left-1/2 w-[300px] md:w-[1000px] h-[70px] md:h-[140px] bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent blur-[60px] [clip-path:polygon(0_50%,100%_0,100%_100%)] pointer-events-none z-0"></div>
+          
+          <div className="flex gap-3 justify-center relative items-center z-10">
+            <button 
+              onClick={() => setActiveModal("signup")} 
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors text-slate-950 py-2 rounded-full h-12 px-8 text-[15px] bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.3)]"
+            >
+              Get started for free
+            </button>
+            <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors text-slate-950 rounded-full w-12 h-12 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="w-[2000px] md:w-[4000px] h-[800px] absolute -bottom-[720px] left-1/2 -translate-x-1/2 rounded-[100%] pointer-events-none bg-gradient-to-t from-[#0a0a0a] via-[#141414] to-cyan-500/10"></div>
         </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 bg-[#0a0a0a] py-16">
-        <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-10 text-base">
-          <div className="flex items-center gap-3">
-            <Brain className="h-6 w-6 text-cyan-500" />
-            <span className="font-heading font-medium text-white text-lg">EduAgent</span>
+        <div className="pt-20 pb-8 md:px-6 px-4">
+          <div className="container mx-auto space-y-6">
+            <div className="flex flex-col justify-between md:flex-row gap-8 md:gap-4">
+              <div className="flex flex-col space-y-4 max-w-sm">
+                <div className="flex items-center gap-3 mb-2">
+                  <Brain className="h-10 w-10 text-cyan-500" />
+                  <h3 className="text-5xl md:text-6xl font-heading font-medium tracking-tighter text-white leading-none">EduAgent</h3>
+                </div>
+                <div className="w-full text-slate-400 text-base md:text-lg font-normal">
+                  Experience the most intuitive AI tutoring platform built for actual studying.
+                </div>
+              </div>
+              <div className="flex gap-16 md:gap-28 pt-4 md:mr-4">
+                <ul className="flex flex-col space-y-5">
+                  <li><Link href="#" className="text-slate-400 text-lg font-normal capitalize hover:text-white transition-colors">Home</Link></li>
+                  <li><Link href="#how-it-works" className="text-slate-400 text-lg font-normal capitalize hover:text-white transition-colors">How it works</Link></li>
+                  <li><Link href="#features" className="text-slate-400 text-lg font-normal capitalize hover:text-white transition-colors">Features</Link></li>
+                </ul>
+                <ul className="flex flex-col space-y-5">
+                  <li><button onClick={() => setActiveModal("login")} className="text-slate-400 text-lg font-normal capitalize hover:text-white transition-colors">Sign in</button></li>
+                  <li><button onClick={() => setActiveModal("signup")} className="text-slate-400 text-lg font-normal capitalize hover:text-white transition-colors">Sign up</button></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="h-[1px] w-full bg-white/10 mt-12 mb-8"></div>
+            
+            <div className="flex flex-col md:flex-row justify-between text-[15px] gap-4 text-slate-500 font-medium pb-4">
+              <p className="text-sm md:text-base font-normal">Copyright {new Date().getFullYear()} EduAgent AI</p>
+              <div className="flex items-center gap-8 md:mr-4">
+                <Link href="#" className="text-sm md:text-base font-normal hover:text-slate-300 transition-colors">Terms of Service &amp; Privacy Policy</Link>
+              </div>
+            </div>
           </div>
-          <div className="text-slate-500 max-w-md text-lg">
-            Upload, read, and learn from one workspace without managing scattered files, lost prompts, or context windows.
-          </div>
-          <div className="flex gap-8 text-slate-400">
-            <Link href="#" className="hover:text-white transition-colors">Terms</Link>
-            <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
-          </div>
-        </div>
-        <div className="mx-auto max-w-7xl px-6 mt-16 text-slate-600 text-sm">
-          © {new Date().getFullYear()} EduAgent AI. All rights reserved.
         </div>
       </footer>
 
