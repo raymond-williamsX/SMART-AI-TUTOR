@@ -178,14 +178,14 @@ export default function HomePage() {
       <Modal isOpen={activeModal === "login"} onClose={() => setActiveModal(null)}>
         <LoginForm 
           onSwitchToSignup={() => setActiveModal("signup")} 
-          redirectTo="/dashboard" 
+          redirectTo="/chat" 
         />
       </Modal>
 
       <Modal isOpen={activeModal === "signup"} onClose={() => setActiveModal(null)}>
         <SignupForm 
           onSwitchToLogin={() => setActiveModal("login")} 
-          redirectTo="/dashboard" 
+          redirectTo="/chat" 
         />
       </Modal>
     </main>

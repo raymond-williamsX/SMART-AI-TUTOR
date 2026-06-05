@@ -57,3 +57,20 @@ export async function generateText(
     throw new Error(`Gemini API error: ${errorMessage}`);
   }
 }
+
+export async function generateEmbedding(text: string): Promise<number[]> {
+  try {
+    const apiKey = getApiKey();
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+
+    const result = await model.embedContent(text);
+    return result.embedding.values;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("[Gemini Error] generateEmbedding failed", {
+      message: errorMessage,
+    });
+    throw new Error(`Gemini Embedding error: ${errorMessage}`);
+  }
+}

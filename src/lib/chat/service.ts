@@ -1,4 +1,5 @@
-import { generateText } from "@/lib/gemini/client";
+import { generateText, generateEmbedding } from "@/lib/gemini/client";
+import { searchSimilarChunks } from "@/lib/elastic/client";
 import type { ChatMessage } from "./types";
 
 const SYSTEM_PROMPT = `You are EduAgent, a professional AI tutor. When responding, do the following:
@@ -32,14 +33,30 @@ async function callGeminiAPI(prompt: string): Promise<string> {
   }
 }
 
-export async function getAIResponse(messages: ChatMessage[]): Promise<ChatMessage> {
+export async function getAIResponse(messages: ChatMessage[], sessionId?: string): Promise<ChatMessage> {
   // Keep recent context compact for predictable latency and token usage.
   const recentMessages = messages.slice(-8);
   const transcript = recentMessages
     .map((m) => `${m.role === "user" ? "Student" : "Tutor"}: ${m.content}`)
     .join("\n\n");
 
-  const prompt = `Conversation transcript:\n${transcript}`;
+  let contextText = "";
+  if (sessionId) {
+    const lastUserMessage = [...recentMessages].reverse().find(m => m.role === "user");
+    if (lastUserMessage) {
+      try {
+         const embedding = await generateEmbedding(lastUserMessage.content);
+         const chunks = await searchSimilarChunks("eduagent-documents", sessionId, embedding, 3);
+         if (chunks.length > 0) {
+           contextText = "\n\n=== RELEVANT CONTEXT FROM UPLOADED DOCUMENTS ===\n" + chunks.join("\n\n");
+         }
+      } catch (e) {
+         console.error("[chat] RAG retrieval error:", e);
+      }
+    }
+  }
+
+  const prompt = `Conversation transcript:\n${transcript}${contextText}`;
 
   const aiText = await callGeminiAPI(prompt);
 

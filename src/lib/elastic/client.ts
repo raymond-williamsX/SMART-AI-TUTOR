@@ -49,3 +49,53 @@ export async function searchIndex(index: string, body: unknown) {
 
   return res.json();
 }
+
+export async function indexDocumentChunks(
+  index: string,
+  chunks: Array<{ text: string; embedding: number[]; sessionId: string }>
+) {
+  const endpoint = getEndpoint();
+  const url = `${endpoint.replace(/\/+$/g, "")}/_bulk`;
+
+  let body = "";
+  for (const chunk of chunks) {
+    body += JSON.stringify({ index: { _index: index } }) + "\n";
+    body += JSON.stringify(chunk) + "\n";
+  }
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-ndjson",
+      Authorization: authHeader(),
+    },
+    body,
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Elastic bulk index failed: ${res.status} ${res.statusText} ${text}`);
+  }
+
+  return res.json();
+}
+
+export async function searchSimilarChunks(index: string, sessionId: string, embedding: number[], limit = 3) {
+  const query = {
+    knn: {
+      field: "embedding",
+      query_vector: embedding,
+      k: limit,
+      num_candidates: 50,
+      filter: {
+        term: {
+          "sessionId.keyword": sessionId
+        }
+      }
+    },
+    _source: ["text"]
+  };
+
+  const res = await searchIndex(index, query);
+  return res.hits?.hits?.map((hit: any) => hit._source.text) || [];
+}

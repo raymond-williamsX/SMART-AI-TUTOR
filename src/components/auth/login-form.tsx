@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function LoginForm({
-  redirectTo = "/dashboard",
+  redirectTo = "/chat",
   initialErrorMessage,
   onSwitchToSignup
 }: {

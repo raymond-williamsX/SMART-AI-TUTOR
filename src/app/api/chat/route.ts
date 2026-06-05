@@ -179,7 +179,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const aiMessage = await getAIResponse(messages);
+    const aiMessage = await getAIResponse(messages, session.id);
 
     const { error: assistantMessageError } = await supabase.from("study_messages").insert({
       session_id: session.id,
