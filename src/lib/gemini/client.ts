@@ -1,9 +1,17 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI, createPartFromBase64 } from "@google/genai";
 
 type GenerateResult = {
   text: string;
   raw: unknown;
 };
+
+export type EmbeddingTaskType = "RETRIEVAL_DOCUMENT" | "RETRIEVAL_QUERY";
+
+const GENERATIVE_MODEL = "gemini-2.5-flash";
+const EMBEDDING_MODEL = "gemini-embedding-001";
+export const EMBEDDING_DIMENSIONS = 768;
+
+let aiClient: GoogleGenAI | null = null;
 
 function getApiKey(): string {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -17,26 +25,27 @@ function getApiKey(): string {
   return apiKey;
 }
 
+function getClient() {
+  if (!aiClient) {
+    aiClient = new GoogleGenAI({ apiKey: getApiKey() });
+  }
+
+  return aiClient;
+}
+
 export async function generateText(
   prompt: string
 ): Promise<GenerateResult> {
   try {
-    const apiKey = getApiKey();
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    const response = await model.generateContent(prompt);
-
-    if (!response.response) {
-      console.error("[Gemini Error] No response object returned");
-      throw new Error("Gemini API returned no response");
-    }
-
-    const text = response.response.text();
+    const response = await getClient().models.generateContent({
+      model: GENERATIVE_MODEL,
+      contents: prompt,
+    });
+    const text = response.text;
 
     if (!text || text.trim() === "") {
       console.error("[Gemini Error] Response text is empty", {
-        rawResponse: response.response,
+        rawResponse: response,
       });
       throw new Error(
         "Gemini API returned empty response. Check API key and rate limits."
@@ -45,7 +54,7 @@ export async function generateText(
 
     return {
       text,
-      raw: response.response,
+      raw: response,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

@@ -1,13 +1,17 @@
 import { generateText, generateEmbedding } from "@/lib/gemini/client";
 import { searchSimilarChunks } from "@/lib/elastic/client";
 import type { ChatMessage } from "./types";
+import { formatRagContext, retrieveMaterialContext } from "@/lib/materials/retrieval";
 
-const SYSTEM_PROMPT = `You are EduAgent, a professional AI tutor. When responding, do the following:
+const SYSTEM_PROMPT = `You are EduAgent AI, a professional AI tutor. When responding, do the following:
 - Act as a knowledgeable and patient tutor.
 - Explain step-by-step with clear examples when appropriate.
 - Simplify complex concepts and use analogies.
 - Ask one or two relevant follow-up questions to gauge understanding.
 - Keep answers concise but thorough and show worked examples when helpful.
+- Use uploaded materials whenever relevant.
+- If the answer exists in uploaded documents, prioritize those sources.
+- If uploaded materials are not relevant or unavailable, use general educational knowledge.
 
 Respond in a supportive, encouraging tone suitable for learners.`;
 
@@ -65,5 +69,6 @@ export async function getAIResponse(messages: ChatMessage[], sessionId?: string)
     role: "assistant",
     content: aiText,
     timestamp: Date.now(),
+    sources,
   };
 }

@@ -4,7 +4,7 @@ import {
   CalendarDays,
   Settings2,
   MessageSquareText,
-  Upload,
+  FolderOpen,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";

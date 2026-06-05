@@ -13,12 +13,13 @@ function mapStudySessionRow(session: any): StudySessionRecord {
     createdAt: session.created_at,
     updatedAt: session.updated_at,
     messages: Array.isArray(session.study_messages)
-      ? session.study_messages.map((message: any) => ({
-          id: message.id,
-          role: message.role,
-          content: message.content,
-          createdAt: message.created_at,
-        }))
+        ? session.study_messages.map((message: any) => ({
+            id: message.id,
+            role: message.role,
+            content: message.content,
+            createdAt: message.created_at,
+            sources: Array.isArray(message.sources) ? message.sources : [],
+          }))
       : [],
   };
 }
@@ -45,7 +46,7 @@ export async function GET() {
 
   const { data: sessions, error } = await supabase
     .from("study_sessions")
-    .select("id,title,topic_category,last_message,created_at,updated_at,study_messages(id,role,content,created_at)")
+    .select("id,title,topic_category,last_message,created_at,updated_at,study_messages(id,role,content,created_at,sources)")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false })
     .order("created_at", { ascending: true, foreignTable: "study_messages" });
@@ -112,7 +113,7 @@ export async function POST(req: Request) {
         topic_category: normalizedTopicCategory.trim() || "General",
         last_message: "",
       })
-      .select("id,title,topic_category,last_message,created_at,updated_at,study_messages(id,role,content,created_at)")
+      .select("id,title,topic_category,last_message,created_at,updated_at,study_messages(id,role,content,created_at,sources)")
       .single();
 
     if (error || !session) {

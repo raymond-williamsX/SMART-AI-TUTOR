@@ -3,9 +3,30 @@ import { getAIResponse } from "@/lib/chat/service";
 import type { ChatMessage } from "@/lib/chat/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DEFAULT_STUDY_SESSION_TITLE, generateStudySessionTitle } from "@/lib/study-sessions/title";
+import type { StudySessionRecord } from "@/lib/study-sessions/types";
 
 function getLastUserMessage(messages: ChatMessage[]) {
   return [...messages].reverse().find((message) => message?.role === "user" && message?.content?.trim());
+}
+
+function mapStudySessionRow(session: any): StudySessionRecord {
+  return {
+    id: session.id,
+    title: session.title,
+    topicCategory: session.topic_category ?? "General",
+    lastMessage: session.last_message ?? "",
+    createdAt: session.created_at,
+    updatedAt: session.updated_at,
+    messages: Array.isArray(session.study_messages)
+      ? session.study_messages.map((message: any) => ({
+          id: message.id,
+          role: message.role,
+          content: message.content,
+          createdAt: message.created_at,
+          sources: Array.isArray(message.sources) ? message.sources : [],
+        }))
+      : [],
+  };
 }
 
 async function fetchSessionForUser(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, sessionId: string, userId: string) {
@@ -26,7 +47,7 @@ async function fetchSessionForUser(supabase: Awaited<ReturnType<typeof createSup
 async function fetchSessionWithMessages(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, sessionId: string, userId: string) {
   const { data, error } = await supabase
     .from("study_sessions")
-    .select("id,title,topic_category,last_message,created_at,updated_at,study_messages(id,role,content,created_at)")
+    .select("id,title,topic_category,last_message,created_at,updated_at,study_messages(id,role,content,created_at,sources)")
     .eq("id", sessionId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -186,6 +207,7 @@ export async function POST(req: Request) {
       user_id: user.id,
       role: "assistant",
       content: aiMessage.content,
+      sources: aiMessage.sources ?? [],
     });
 
     if (assistantMessageError) {
@@ -248,7 +270,7 @@ export async function POST(req: Request) {
       requestId,
       data: {
         message: aiMessage,
-        session: latestSession,
+        session: mapStudySessionRow(latestSession),
       },
     });
   } catch (error) {

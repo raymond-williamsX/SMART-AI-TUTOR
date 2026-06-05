@@ -19,6 +19,17 @@ function safeTimestamp(value: unknown) {
   return Number.isFinite(timestamp) ? timestamp : Date.now();
 }
 
+function sourceDetail(source: NonNullable<MsgType["sources"]>[number]) {
+  const details = [
+    source.page ? `Page ${source.page}` : null,
+    source.slide ? `Slide ${source.slide}` : null,
+    source.chapter,
+    source.section,
+  ].filter(Boolean);
+
+  return details.length > 0 ? details.join(" · ") : "Uploaded material";
+}
+
 export function ChatMessage({ message }: { message?: MsgType | null }) {
   const [hasMounted, setHasMounted] = useState(false);
 
@@ -31,6 +42,7 @@ export function ChatMessage({ message }: { message?: MsgType | null }) {
     role: message?.role === "assistant" ? "assistant" : "user",
     content: safeMessageContent(message?.content),
     timestamp: safeTimestamp(message?.timestamp),
+    sources: Array.isArray(message?.sources) ? message.sources : [],
   } satisfies MsgType;
 
   const isUser = safeMessage.role === "user";
