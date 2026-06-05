@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { generateEmbedding } from "@/lib/gemini/client";
 import { indexDocumentChunks } from "@/lib/elastic/client";
-import pdfParse from "pdf-parse";
+import { PDFParse } from "pdf-parse";
 
 // Simple text splitter function
 function splitText(text: string, chunkSize: number = 1000, overlap: number = 200): string[] {
@@ -36,8 +36,14 @@ export async function POST(req: Request) {
     // Parse PDF
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const pdfData = await pdfParse(buffer);
-    const rawText = pdfData.text;
+    const parser = new PDFParse({ data: buffer });
+    let rawText = "";
+    try {
+      const pdfData = await parser.getText();
+      rawText = pdfData.pages.map((p) => p.text).join("\n");
+    } finally {
+      await parser.destroy();
+    }
 
     if (!rawText.trim()) {
       return NextResponse.json({ success: false, error: "No text found in PDF" }, { status: 400 });

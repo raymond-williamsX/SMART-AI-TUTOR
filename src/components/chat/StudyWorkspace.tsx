@@ -109,7 +109,6 @@ function sessionToMessages(session: StudySessionRecord | null | undefined): Chat
 export function StudyWorkspace() {
   const router = useRouter();
   const { user, ready, loading: authLoading, signOut } = useAuth();
-  const { sessionsOpen, closeSessions } = useShellUi();
   const [sessions, setSessions] = useState<StudySessionRecord[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [query, setQuery] = useState("");

@@ -1,6 +1,5 @@
-import { generateText, generateEmbedding } from "@/lib/gemini/client";
-import { searchSimilarChunks } from "@/lib/elastic/client";
-import type { ChatMessage } from "./types";
+import { generateText } from "@/lib/gemini/client";
+import type { ChatMessage, ChatSource } from "./types";
 import { formatRagContext, retrieveMaterialContext } from "@/lib/materials/retrieval";
 
 const SYSTEM_PROMPT = `You are EduAgent AI, a professional AI tutor. When responding, do the following:
@@ -37,7 +36,11 @@ async function callGeminiAPI(prompt: string): Promise<string> {
   }
 }
 
-export async function getAIResponse(messages: ChatMessage[], sessionId?: string): Promise<ChatMessage> {
+export async function getAIResponse(
+  messages: ChatMessage[],
+  sessionId?: string,
+  userId?: string
+): Promise<ChatMessage> {
   // Keep recent context compact for predictable latency and token usage.
   const recentMessages = messages.slice(-8);
   const transcript = recentMessages
@@ -45,17 +48,23 @@ export async function getAIResponse(messages: ChatMessage[], sessionId?: string)
     .join("\n\n");
 
   let contextText = "";
-  if (sessionId) {
-    const lastUserMessage = [...recentMessages].reverse().find(m => m.role === "user");
+  let sources: ChatSource[] = [];
+
+  if (sessionId && userId) {
+    const lastUserMessage = [...recentMessages].reverse().find((m) => m.role === "user");
     if (lastUserMessage) {
       try {
-         const embedding = await generateEmbedding(lastUserMessage.content);
-         const chunks = await searchSimilarChunks("eduagent-documents", sessionId, embedding, 3);
-         if (chunks.length > 0) {
-           contextText = "\n\n=== RELEVANT CONTEXT FROM UPLOADED DOCUMENTS ===\n" + chunks.join("\n\n");
-         }
+        const ragResult = await retrieveMaterialContext({
+          userId,
+          sessionId,
+          query: lastUserMessage.content,
+        });
+        if (ragResult.chunks.length > 0) {
+          contextText = "\n\n=== RELEVANT CONTEXT FROM UPLOADED DOCUMENTS ===\n" + formatRagContext(ragResult.chunks);
+          sources = ragResult.sources;
+        }
       } catch (e) {
-         console.error("[chat] RAG retrieval error:", e);
+        console.error("[chat] RAG retrieval error:", e);
       }
     }
   }

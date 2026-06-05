@@ -102,7 +102,7 @@ export async function processMaterial(params: {
     for (const chunk of chunks) {
       chunksWithEmbeddings.push({
         ...chunk,
-        embedding: await generateEmbedding(chunk.text, "RETRIEVAL_DOCUMENT", material.file_name),
+        embedding: await generateEmbedding(chunk.text, "RETRIEVAL_DOCUMENT"),
       });
     }
 

@@ -2,7 +2,6 @@ import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
 import JSZip from "jszip";
 import { XMLParser } from "fast-xml-parser";
-
 import { extractImageText } from "@/lib/gemini/client";
 import type { ExtractedMaterialSegment } from "./types";
 
