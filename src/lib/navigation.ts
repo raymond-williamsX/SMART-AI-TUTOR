@@ -5,6 +5,7 @@ import {
   Settings2,
   MessageSquareText,
   FolderOpen,
+  Upload,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
