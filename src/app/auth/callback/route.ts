@@ -4,7 +4,7 @@ import { createSupabaseServerClient, type SupabaseCookieStore } from "@/lib/supa
 
 export async function GET(request: NextRequest) {
   const requestId = crypto.randomUUID();
-  const nextPath = request.nextUrl.searchParams.get("next") ?? "/dashboard";
+  const nextPath = request.nextUrl.searchParams.get("next") ?? "/chat";
   const error = request.nextUrl.searchParams.get("error");
   const errorDescription = request.nextUrl.searchParams.get("error_description");
 
@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
   });
 
   if (error) {
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL("/", request.url);
+    loginUrl.searchParams.set("auth", "login");
     loginUrl.searchParams.set("error", errorDescription ?? error);
     loginUrl.searchParams.set("redirectTo", nextPath);
 
@@ -29,7 +30,8 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
 
   if (!code) {
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL("/", request.url);
+    loginUrl.searchParams.set("auth", "login");
     loginUrl.searchParams.set("error", "Missing OAuth code.");
     loginUrl.searchParams.set("redirectTo", nextPath);
 
@@ -61,7 +63,8 @@ export async function GET(request: NextRequest) {
         message: exchangeError.message,
       });
 
-      const loginUrl = new URL("/login", request.url);
+      const loginUrl = new URL("/", request.url);
+      loginUrl.searchParams.set("auth", "login");
       loginUrl.searchParams.set("error", "Google sign-in failed. Please try again.");
       loginUrl.searchParams.set("redirectTo", nextPath);
 
@@ -81,7 +84,8 @@ export async function GET(request: NextRequest) {
       error: callbackError,
     });
 
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL("/", request.url);
+    loginUrl.searchParams.set("auth", "login");
     loginUrl.searchParams.set("error", "Unable to finish Google sign-in.");
     loginUrl.searchParams.set("redirectTo", nextPath);
 

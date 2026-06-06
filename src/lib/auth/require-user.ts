@@ -7,7 +7,7 @@ export async function requireUser(redirectTo: string) {
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
-    redirect(`/login?redirectTo=${encodeURIComponent(redirectTo)}`);
+    redirect(`/?auth=login&redirectTo=${encodeURIComponent(redirectTo)}`);
   }
 
   return data.user;
