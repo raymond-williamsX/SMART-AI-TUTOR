@@ -117,6 +117,7 @@ export function StudyWorkspace() {
   const [error, setError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [chatCourseId, setChatCourseId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
@@ -290,6 +291,7 @@ export function StudyWorkspace() {
         body: JSON.stringify({
           sessionId: sessionForRequest.id,
           messages: optimisticMessages,
+          ...(chatCourseId ? { courseId: chatCourseId } : {}),
         }),
       });
 
@@ -547,7 +549,14 @@ export function StudyWorkspace() {
             <h1 className="text-3xl md:text-4xl font-medium text-white mb-8">Where should we begin?</h1>
             
             <div className="w-full max-w-3xl">
-              <ChatInput onSend={handleSend} onUpload={handleUpload} isUploading={isUploading} disabled={sending || loadingSessions || authLoading || !ready} />
+              <ChatInput
+                onSend={handleSend}
+                onUpload={handleUpload}
+                isUploading={isUploading}
+                disabled={sending || loadingSessions || authLoading || !ready}
+                courseId={chatCourseId ?? undefined}
+                onCourseId={(id) => setChatCourseId(id)}
+              />
             </div>
 
             <div className="mt-8 flex flex-wrap justify-center gap-2 max-w-2xl">
@@ -568,7 +577,14 @@ export function StudyWorkspace() {
         {hasMessages && (
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent p-4 pb-6">
              <div className="mx-auto max-w-3xl">
-               <ChatInput onSend={handleSend} onUpload={handleUpload} isUploading={isUploading} disabled={sending || loadingSessions || authLoading || !ready} />
+               <ChatInput
+                 onSend={handleSend}
+                 onUpload={handleUpload}
+                 isUploading={isUploading}
+                 disabled={sending || loadingSessions || authLoading || !ready}
+                 courseId={chatCourseId ?? undefined}
+                 onCourseId={(id) => setChatCourseId(id)}
+               />
                <p className="text-center text-[11px] text-slate-500 mt-2">EduAgent can make mistakes. Consider verifying important information.</p>
              </div>
           </div>

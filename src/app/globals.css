@@ -31,21 +31,26 @@
   --radius: 1rem;
 }
 
-* {
-  border-color: hsl(var(--border));
-}
+@layer base {
+  html {
+    scroll-behavior: smooth !important;
+    scroll-padding-top: 100px;
+  }
 
-html {
-  height: 100%;
-  scroll-behavior: smooth;
-}
-
-body {
+  body {
   height: 100%;
   min-height: 100vh;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-feature-settings: "rlig" 1, "calt" 1;
+  scroll-behavior: smooth;
+}
+
+* {
+  border-color: hsl(var(--border));
+  scroll-behavior: smooth;
+}
+
 }
 
 ::selection {

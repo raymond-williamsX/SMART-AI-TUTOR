@@ -132,7 +132,7 @@ export function AuthProvider({ children, initialSession }: { children: ReactNode
       setError(null);
 
       const options: any = {
-        redirectTo: buildOAuthRedirectUrl(redirectTo ?? "/dashboard"),
+        redirectTo: buildOAuthRedirectUrl(redirectTo ?? "/chat"),
       };
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({

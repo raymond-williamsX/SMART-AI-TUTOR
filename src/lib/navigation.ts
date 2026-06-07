@@ -17,10 +17,9 @@ export type NavigationItem = {
 };
 
 export const navigationItems: NavigationItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: BarChart3 },
   { label: "AI Chat", href: "/chat", icon: MessageSquareText },
+  { label: "Courses", href: "/courses", icon: BookOpen },
+  { label: "Study Mode", href: "/study", icon: CalendarDays },
+  { label: "Quiz Generator", href: "/quiz", icon: Settings2 },
   { label: "Upload", href: "/upload", icon: Upload },
-  // { label: "Schedule", href: "/schedule", icon: CalendarDays },
-  // { label: "Progress", href: "/progress", icon: BookOpen },
-  // { label: "Settings", href: "/settings", icon: Settings2 },
 ];
