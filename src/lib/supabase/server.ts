@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 
@@ -10,6 +9,15 @@ export type SupabaseCookieStore = {
 };
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
+
+const READ_ONLY_COOKIE_STORE: SupabaseCookieStore = {
+  getAll() {
+    return [];
+  },
+  setAll() {
+    return;
+  },
+};
 
 export async function createSupabaseServerClient(cookieStore?: SupabaseCookieStore) {
   const supabaseUrl = getSupabaseUrl();
@@ -30,23 +38,7 @@ export async function createSupabaseServerClient(cookieStore?: SupabaseCookieSto
     } as any;
   }
 
-  const nextHeadersCookieStore = await cookies();
-  const resolvedCookieStore =
-    cookieStore ??
-    {
-      getAll() {
-        return nextHeadersCookieStore.getAll();
-      },
-      setAll(cookiesToSet: CookieToSet[]) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          nextHeadersCookieStore.set({
-            name,
-            value,
-            ...options,
-          });
-        });
-      },
-    };
+  const resolvedCookieStore = cookieStore ?? READ_ONLY_COOKIE_STORE;
 
   return createServerClient(
     supabaseUrl,
