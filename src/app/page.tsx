@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowRight, BookOpen, Brain, CheckCircle2, FileText, Mic, ShieldCheck, UploadCloud } from "lucide-react";
 
@@ -173,7 +173,7 @@ function DemoChat({ onTriggerSignup }: { onTriggerSignup: () => void }) {
   );
 }
 
-export default function HomePage() {
+function HomePageContent() {
   const [activeModal, setActiveModal] = useState<"login" | "signup" | null>(null);
   const searchParams = useSearchParams();
 
@@ -369,5 +369,17 @@ export default function HomePage() {
         />
       </Modal>
     </main>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+      </div>
+    }>
+      <HomePageContent />
+    </Suspense>
   );
 }
