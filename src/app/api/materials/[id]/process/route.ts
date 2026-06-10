@@ -8,9 +8,12 @@ export const runtime = "nodejs";
 
 export async function POST(_req: Request, context: { params: Promise<{ id: string }> }) {
   const requestId = crypto.randomUUID();
+  console.log("[DEBUG] /api/materials/[id]/process POST called");
 
   try {
-    const { id } = await context.params;
+    const params = await context.params;
+    const id = params?.id;
+    console.log("[DEBUG] Route id resolved:", id);
     const supabase = await createSupabaseServerClient();
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
