@@ -8,8 +8,12 @@ export type SupabaseCookieStore = {
   setAll: (cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) => void;
 };
 
+type SupabaseServerClient = ReturnType<typeof createServerClient>;
+
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
+// Safe read-only fallback used when no cookie store is provided (e.g. root layout RSC context).
+// Prevents the "cookies() called outside request scope" crash rayx fixed.
 const READ_ONLY_COOKIE_STORE: SupabaseCookieStore = {
   getAll() {
     return [];
@@ -19,7 +23,7 @@ const READ_ONLY_COOKIE_STORE: SupabaseCookieStore = {
   },
 };
 
-export async function createSupabaseServerClient(cookieStore?: SupabaseCookieStore) {
+export async function createSupabaseServerClient(cookieStore?: SupabaseCookieStore): Promise<SupabaseServerClient> {
   const supabaseUrl = getSupabaseUrl();
   const supabaseAnonKey = getSupabaseKey();
 
@@ -35,7 +39,7 @@ export async function createSupabaseServerClient(cookieStore?: SupabaseCookieSto
           error: null,
         }),
       },
-    } as any;
+    } as unknown as SupabaseServerClient;
   }
 
   const resolvedCookieStore = cookieStore ?? READ_ONLY_COOKIE_STORE;
@@ -54,4 +58,4 @@ export async function createSupabaseServerClient(cookieStore?: SupabaseCookieSto
       },
     }
   );
-}
+}

@@ -31,24 +31,26 @@
   --radius: 1rem;
 }
 
-* {
-  border-color: hsl(var(--border));
-}
+@layer base {
+  html {
+    scroll-behavior: smooth !important;
+    scroll-padding-top: 100px;
+  }
 
-html {
+  body {
   height: 100%;
+  min-height: 100vh;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-feature-settings: "rlig" 1, "calt" 1;
   scroll-behavior: smooth;
 }
 
-body {
-  height: 100%;
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(10, 165, 180, 0.14), transparent 28%),
-    radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 24%),
-    linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)) 60%, hsl(223 40% 6%));
-  color: hsl(var(--foreground));
-  font-feature-settings: "rlig" 1, "calt" 1;
+* {
+  border-color: hsl(var(--border));
+  scroll-behavior: smooth;
+}
+
 }
 
 ::selection {
