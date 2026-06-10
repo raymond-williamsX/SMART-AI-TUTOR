@@ -71,15 +71,25 @@ export async function retrieveMaterialContext(params: {
     limit: 5,
   });
 
-  const relevantSessionChunks = sessionChunks.filter((chunk) => chunk.score >= MIN_RELEVANCE_SCORE);
-  const chunks =
-    relevantSessionChunks.length > 0
-      ? relevantSessionChunks
-      : (await searchMaterialEmbeddings({
-          userId: params.userId,
-          queryEmbedding,
-          limit: 5,
-        })).filter((chunk) => chunk.score >= MIN_RELEVANCE_SCORE);
+  let chunks = sessionChunks.filter((chunk) => chunk.score >= MIN_RELEVANCE_SCORE);
+  
+  if (chunks.length === 0) {
+    // Try general user materials with threshold
+    chunks = (await searchMaterialEmbeddings({
+      userId: params.userId,
+      queryEmbedding,
+      limit: 5,
+    })).filter((chunk) => chunk.score >= MIN_RELEVANCE_SCORE);
+  }
+
+  // Fallback: If still empty (e.g. mock embeddings in offline demo mode), return top matches without threshold
+  if (chunks.length === 0) {
+    chunks = sessionChunks.length > 0 ? sessionChunks : await searchMaterialEmbeddings({
+      userId: params.userId,
+      queryEmbedding,
+      limit: 5,
+    });
+  }
 
   return {
     chunks,
