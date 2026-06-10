@@ -5,30 +5,39 @@ import { buildUploadPath, UPLOADED_MATERIALS_BUCKET } from "@/lib/uploads/consta
 
 export async function POST(req: Request) {
   const requestId = crypto.randomUUID();
+  console.log(`[upload:api] [${requestId}] Starting upload request handler...`);
 
   try {
+    console.log(`[upload:api] [${requestId}] Step 1: Performing auth check...`);
     const supabase = await createSupabaseServerClient();
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
 
     if (!user) {
+      console.warn(`[upload:api] [${requestId}] Auth check failed: Unauthorized`);
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
+    console.log(`[upload:api] [${requestId}] Auth check successful for user: ${user.id}`);
 
+    console.log(`[upload:api] [${requestId}] Step 2: Parsing formData...`);
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const sessionId = formData.get("sessionId") as string;
 
     if (!file || !sessionId) {
+      console.warn(`[upload:api] [${requestId}] Parsing failed: file or sessionId missing`);
       return NextResponse.json({ success: false, error: "File and sessionId are required" }, { status: 400 });
     }
+    console.log(`[upload:api] [${requestId}] FormData parsed: filename="${file.name}", size=${file.size}, sessionId="${sessionId}"`);
 
     // Convert File to ArrayBuffer and Buffer
+    console.log(`[upload:api] [${requestId}] Converting file to ArrayBuffer...`);
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
     // 1. Upload file to Supabase storage bucket 'uploaded-materials'
     const storagePath = buildUploadPath(user.id, sessionId, file.name);
+    console.log(`[upload:api] [${requestId}] Step 3: Uploading file to storage path: "${storagePath}" in bucket "${UPLOADED_MATERIALS_BUCKET}"...`);
     const { error: uploadError } = await supabase.storage
       .from(UPLOADED_MATERIALS_BUCKET)
       .upload(storagePath, buffer, {
@@ -37,11 +46,13 @@ export async function POST(req: Request) {
       });
 
     if (uploadError) {
-      console.error("[upload:api] storage upload failed:", uploadError);
+      console.error(`[upload:api] [${requestId}] Storage upload failed:`, uploadError);
       return NextResponse.json({ success: false, error: "Failed to upload file to storage" }, { status: 500 });
     }
+    console.log(`[upload:api] [${requestId}] Storage upload successful`);
 
     // 2. Insert metadata into the database uploaded_materials table
+    console.log(`[upload:api] [${requestId}] Step 4: Inserting metadata into database uploaded_materials table...`);
     const { data: insertedRow, error: insertError } = await supabase
       .from("uploaded_materials")
       .insert({
@@ -55,21 +66,27 @@ export async function POST(req: Request) {
       .single();
 
     if (insertError || !insertedRow) {
-      console.error("[upload:api] database insert failed:", insertError);
+      console.error(`[upload:api] [${requestId}] Database insert failed:`, insertError);
       // Clean up uploaded file on failure
-      await supabase.storage.from(UPLOADED_MATERIALS_BUCKET).remove([storagePath]).catch(() => null);
+      console.log(`[upload:api] [${requestId}] Cleaning up uploaded file from storage...`);
+      await supabase.storage.from(UPLOADED_MATERIALS_BUCKET).remove([storagePath]).catch((err) => {
+        console.error(`[upload:api] [${requestId}] Cleanup removal failed:`, err);
+      });
       return NextResponse.json({ success: false, error: insertError?.message || "Failed to save upload metadata" }, { status: 500 });
     }
+    console.log(`[upload:api] [${requestId}] Database insert successful. Inserted ID: ${insertedRow.id}`);
 
     // 3. Process the material (extraction, chunking, embedding, ElasticSearch indexing)
+    console.log(`[upload:api] [${requestId}] Step 5: Invoking processMaterial for ID: ${insertedRow.id}`);
     try {
       await processMaterial({
         supabase,
         materialId: insertedRow.id,
         userId: user.id,
       });
+      console.log(`[upload:api] [${requestId}] processMaterial completed successfully`);
     } catch (processError) {
-      console.error("[upload:api] document processing failed:", processError);
+      console.error(`[upload:api] [${requestId}] Document processing failed:`, processError);
       const message = processError instanceof Error ? processError.message : "Document processing failed";
       return NextResponse.json({ success: false, error: message }, { status: 500 });
     }
@@ -80,7 +97,7 @@ export async function POST(req: Request) {
     });
 
   } catch (error) {
-    console.error("[upload:api] unexpected error processing file:", error);
+    console.error(`[upload:api] [${requestId}] Unexpected route-level handler error:`, error);
     return NextResponse.json({ success: false, error: "Failed to process document" }, { status: 500 });
   }
 }

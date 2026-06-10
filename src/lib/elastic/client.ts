@@ -171,11 +171,13 @@ async function elasticRequest(path: string, init: RequestInit = {}) {
   }
 
   if (useMock) {
+    console.log(`[Elastic Client] [Mock] Executing ${init.method || "GET"} request on "${path}"`);
     return mockElasticRequest(path, init);
   }
 
   try {
     const url = `${endpoint.replace(/\/+$/g, "")}/${path.replace(/^\/+/g, "")}`;
+    console.log(`[Elastic Client] [Cloud] Sending ${init.method || "GET"} to: ${url}`);
 
     const res = await fetch(url, {
       ...init,
@@ -188,14 +190,18 @@ async function elasticRequest(path: string, init: RequestInit = {}) {
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
+      console.error(`[Elastic Client] Cloud request failed: status=${res.status} ${res.statusText}`, text);
       throw new Error(`Elastic request failed: ${res.status} ${res.statusText} ${text}`);
     }
 
     if (res.status === 204) {
+      console.log(`[Elastic Client] Cloud response: 204 No Content`);
       return null;
     }
 
-    return res.json().catch(() => null);
+    const json = await res.json().catch(() => null);
+    console.log(`[Elastic Client] Cloud response: success`);
+    return json;
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     if (
@@ -208,6 +214,7 @@ async function elasticRequest(path: string, init: RequestInit = {}) {
       useMock = true;
       return mockElasticRequest(path, init);
     }
+    console.error(`[Elastic Client] Elastic request encountered exception:`, error);
     throw error;
   }
 }
