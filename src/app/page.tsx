@@ -20,6 +20,159 @@ const features = [
   { icon: BookOpen, title: "Study plans", description: "Create personalized study paths for exams, assignments, and skill-building." },
 ];
 
+function DemoChat({ onTriggerSignup }: { onTriggerSignup: () => void }) {
+  const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showCTA, setShowCTA] = useState(false);
+
+  const starters = [
+    "Explain quantum computing in simple terms",
+    "What is the difference between active and passive transport?",
+    "Give me a quick analogy for recursive programming",
+  ];
+
+  async function handleSend(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed || loading) return;
+
+    setError(null);
+    setLoading(true);
+    setInput("");
+    
+    // Add user message
+    setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
+
+    try {
+      const res = await fetch("/api/demo-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmed }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to generate answer.");
+      }
+
+      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      setShowCTA(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "I apologize, but I'm having trouble connecting to the tutoring engine right now. Please try again or sign up for full access!" },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="w-full max-w-3xl mx-auto rounded-3xl border border-white/10 bg-[#141414]/40 backdrop-blur-md p-6 sm:p-8 text-left shadow-[0_0_50px_rgba(6,182,212,0.05)] mb-24">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400">
+          <Brain className="h-4 w-4" />
+        </div>
+        <div>
+          <h3 className="text-base font-semibold text-white">Interactive AI Tutor Demo</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Test EduAgent's capabilities immediately below.</p>
+        </div>
+      </div>
+
+      {/* Messages area */}
+      <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-1">
+        {messages.length === 0 && (
+          <p className="text-sm text-slate-400 leading-relaxed italic">
+            Ask any study question below, or select a starter topic to preview tutoring capabilities instantly.
+          </p>
+        )}
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                msg.role === "user"
+                  ? "bg-cyan-500/15 border border-cyan-500/20 text-white rounded-br-none"
+                  : "bg-white/[0.04] border border-white/5 text-slate-300 rounded-bl-none"
+              }`}
+            >
+              {msg.content}
+            </div>
+          </div>
+        ))}
+
+        {loading && (
+          <div className="flex justify-start">
+            <div className="flex items-center gap-2 rounded-2xl bg-white/[0.04] border border-white/5 px-4 py-2.5">
+              <span className="h-1.5 w-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+              <span className="h-1.5 w-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+              <span className="h-1.5 w-1.5 bg-cyan-400 rounded-full animate-bounce"></span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Starters */}
+      {messages.length === 0 && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {starters.map((starter) => (
+            <button
+              key={starter}
+              onClick={() => handleSend(starter)}
+              disabled={loading}
+              className="text-xs text-slate-400 border border-white/10 bg-white/[0.02] rounded-full px-3.5 py-1.5 hover:border-cyan-500/30 hover:bg-cyan-500/5 hover:text-white transition-colors"
+            >
+              {starter}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Input row */}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSend(input)}
+          placeholder="Ask a study question... (e.g. How does DNA replicate?)"
+          disabled={loading}
+          className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-colors"
+        />
+        <button
+          onClick={() => handleSend(input)}
+          disabled={loading || !input.trim()}
+          className="h-11 px-5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+        >
+          Ask
+        </button>
+      </div>
+
+      {/* CTA Conversion Box */}
+      {showCTA && (
+        <div className="mt-8 border border-cyan-500/25 bg-cyan-500/10 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-left">
+            <p className="text-sm font-semibold text-white">Unlock full tutoring powers!</p>
+            <p className="text-xs text-cyan-200 mt-1">
+              Create persistent study sessions, upload your lecture materials, and generate custom practice quizzes.
+            </p>
+          </div>
+          <button
+            onClick={onTriggerSignup}
+            className="whitespace-nowrap rounded-xl bg-white hover:bg-slate-200 text-slate-950 px-5 py-2.5 text-xs font-semibold shadow-md transition-all flex items-center gap-1 shrink-0"
+          >
+            Create free account <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [activeModal, setActiveModal] = useState<"login" | "signup" | null>(null);
   const searchParams = useSearchParams();
@@ -72,6 +225,8 @@ export default function HomePage() {
             Read docs
           </Button>
         </div>
+        
+        <DemoChat onTriggerSignup={() => setActiveModal("signup")} />
         
         {/* Dashboard Image Mockup */}
         <div className="relative mx-auto max-w-5xl rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.8)]">

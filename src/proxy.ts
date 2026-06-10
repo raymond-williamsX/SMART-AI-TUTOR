@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 type CookieToSet = { name: string; value: string; options: Record<string, unknown> };
 
-const PROTECTED_PATHS = ["/chat", "/upload", "/schedule", "/progress", "/courses", "/study", "/quiz"];
+const PROTECTED_PATHS = ["/chat", "/materials", "/schedule", "/progress", "/courses", "/study", "/quiz"];
 const AUTH_PATHS = ["/login", "/signup"];
 
 function isProtectedPath(pathname: string) {
@@ -76,5 +76,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/chat/:path*", "/upload/:path*", "/schedule/:path*", "/progress/:path*", "/courses/:path*", "/study/:path*", "/quiz/:path*", "/login", "/signup"],
+  matcher: ["/chat/:path*", "/materials/:path*", "/schedule/:path*", "/progress/:path*", "/courses/:path*", "/study/:path*", "/quiz/:path*", "/login", "/signup"],
 };

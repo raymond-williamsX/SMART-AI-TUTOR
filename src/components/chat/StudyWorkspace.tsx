@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, LogOut, Menu, Plus, Search, Brain, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { ChatInput } from "./ChatInput";
@@ -108,6 +108,8 @@ function sessionToMessages(session: StudySessionRecord | null | undefined): Chat
 
 export function StudyWorkspace() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const paramSessionId = searchParams.get("sessionId");
   const { user, ready, loading: authLoading, signOut } = useAuth();
   const [sessions, setSessions] = useState<StudySessionRecord[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -186,7 +188,9 @@ export function StudyWorkspace() {
 
         const nextSessions = sortSessions((payload.data?.sessions ?? []).map(normalizeSession));
         setSessions(nextSessions);
-        if (nextSessions.length > 0) {
+        if (paramSessionId && nextSessions.some((session) => session.id === paramSessionId)) {
+          setActiveSessionId(paramSessionId);
+        } else if (nextSessions.length > 0) {
           setActiveSessionId(nextSessions[0].id);
         }
       } catch (loadError) {
