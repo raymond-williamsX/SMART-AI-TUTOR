@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 import { getSupabaseKey, getSupabaseUrl } from "@/lib/supabase/config";
 
@@ -12,7 +13,7 @@ type SupabaseServerClient = ReturnType<typeof createServerClient>;
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
-// Safe read-only fallback used when no cookie store is provided (e.g. root layout RSC context).
+// Safe read-only fallback used when no cookie store is provided and cookies() throws (e.g. root layout RSC context).
 // Prevents the "cookies() called outside request scope" crash rayx fixed.
 const READ_ONLY_COOKIE_STORE: SupabaseCookieStore = {
   getAll() {
@@ -42,7 +43,28 @@ export async function createSupabaseServerClient(cookieStore?: SupabaseCookieSto
     } as unknown as SupabaseServerClient;
   }
 
-  const resolvedCookieStore = cookieStore ?? READ_ONLY_COOKIE_STORE;
+  let resolvedCookieStore = cookieStore;
+  if (!resolvedCookieStore) {
+    try {
+      const nextCookies = await cookies();
+      resolvedCookieStore = {
+        getAll() {
+          return nextCookies.getAll();
+        },
+        setAll(cookiesToSet: CookieToSet[]) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              nextCookies.set(name, value, options);
+            });
+          } catch {
+            // Ignore header set errors when called inside RSC rendering contexts.
+          }
+        },
+      };
+    } catch {
+      resolvedCookieStore = READ_ONLY_COOKIE_STORE;
+    }
+  }
 
   return createServerClient(
     supabaseUrl,
@@ -50,12 +72,12 @@ export async function createSupabaseServerClient(cookieStore?: SupabaseCookieSto
     {
       cookies: {
         getAll() {
-          return resolvedCookieStore.getAll();
+          return resolvedCookieStore!.getAll();
         },
         setAll(cookiesToSet: CookieToSet[]) {
-          resolvedCookieStore.setAll(cookiesToSet);
+          resolvedCookieStore!.setAll(cookiesToSet);
         },
       },
     }
   );
-}
+}

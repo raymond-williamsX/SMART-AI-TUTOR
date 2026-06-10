@@ -294,6 +294,38 @@ function HomePageContent() {
         </div>
       </section>
 
+      {/* WhatsApp CTA Section */}
+      <section className="mx-auto max-w-4xl px-6 pb-24 text-center">
+        <div className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-emerald-950/10 backdrop-blur-md p-8 sm:p-10 shadow-[0_0_50px_rgba(16,185,129,0.03)]">
+          <div className="absolute top-0 right-0 h-40 w-40 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 h-40 w-40 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div className="flex flex-col items-center justify-center text-center gap-6 relative z-10">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <svg className="h-7 w-7 fill-current" viewBox="0 0 24 24">
+                <path d="M12.012 2C6.48 2 2 6.48 2 12.012c0 1.764.456 3.48 1.332 5.004L2 22l5.148-1.344c1.488.816 3.168 1.248 4.86 1.248 5.532 0 10.012-4.48 10.012-10.012A9.97 9.97 0 0012.012 2zm5.796 14.196c-.24.672-1.2 1.224-1.656 1.284-.444.06-1.008.084-2.82-.672-2.316-.96-3.804-3.324-3.924-3.48-.108-.156-.936-1.248-.936-2.376 0-1.128.588-1.68.804-1.908.216-.228.468-.288.624-.288.156 0 .312.008.444.012.144.004.336-.056.528.408.192.48.66 1.608.72 1.728.06.12.096.264.012.432-.084.168-.18.276-.3.42-.12.144-.252.3-.36.408-.12.12-.24.252-.108.48.132.228.588.972 1.26 1.572.864.768 1.596 1.008 1.824 1.116.228.108.36.096.492-.06.132-.156.576-.672.732-.9.156-.228.312-.192.528-.108.216.084 1.38.648 1.62.768.24.12.408.18.468.288.06.108.06.624-.18 1.296z" />
+              </svg>
+            </div>
+            
+            <div className="max-w-md">
+              <h3 className="text-xl sm:text-2xl font-semibold text-white">Prefer WhatsApp?</h3>
+              <p className="text-sm text-slate-400 mt-2">
+                Chat with Edu Agent AI directly on WhatsApp. Continue your learning sessions on the go.
+              </p>
+            </div>
+
+            <Link
+              href={process.env.NEXT_PUBLIC_WHATSAPP_URL || "https://wa.me/15551234567"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-8 h-12 text-sm transition-all shadow-[0_0_25px_rgba(16,185,129,0.2)]"
+            >
+              Start WhatsApp Chat
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA & Footer Section */}
       <footer className="bg-[#0a0a0a] pt-32">
         <div className="relative overflow-hidden h-[240px] flex justify-center items-center border-y border-white/5">
