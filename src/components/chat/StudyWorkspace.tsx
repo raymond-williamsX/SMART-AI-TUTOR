@@ -1,41 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, LogOut, Menu, Plus, Search, Brain, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { Brain, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import { ChatInput } from "./ChatInput";
 import { ChatMessage as ChatMessageComponent } from "./ChatMessage";
 import { TypingIndicator } from "./TypingIndicator";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import type { ChatMessage } from "@/lib/chat/types";
-import { DEFAULT_STUDY_SESSION_TITLE } from "@/lib/study-sessions/title";
 import type { StudySessionRecord } from "@/lib/study-sessions/types";
+import { useDashboard } from "@/context/dashboard-context";
 
 type ApiErrorResponse = {
   code: string;
   message: string;
-};
-
-type SessionsApiResponse = {
-  success: boolean;
-  requestId: string;
-  data?: {
-    sessions: StudySessionRecord[];
-  };
-  error?: ApiErrorResponse;
-};
-
-type SessionCreateApiResponse = {
-  success: boolean;
-  requestId: string;
-  data?: {
-    session: StudySessionRecord;
-  };
-  error?: ApiErrorResponse;
 };
 
 type ChatApiResponse = {
@@ -55,40 +34,6 @@ const starterPrompts = [
   "Help me practice Spanish vocabulary",
 ];
 
-function sortSessions(sessions: StudySessionRecord[] = []) {
-  return [...sessions].sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
-}
-
-function normalizeSession(session: any): StudySessionRecord {
-  const messages = Array.isArray(session?.messages)
-    ? session.messages
-    : Array.isArray(session?.study_messages)
-      ? session.study_messages.map((message: any) => ({
-          id: message.id,
-          role: message.role,
-          content: message.content,
-          createdAt: message.created_at,
-          sources: Array.isArray(message.sources) ? message.sources : [],
-        }))
-      : [];
-
-  return {
-    id: session.id,
-    title: session.title,
-    topicCategory: session.topicCategory ?? session.topic_category ?? "General",
-    lastMessage: session.lastMessage ?? session.last_message ?? "",
-    createdAt: session.createdAt ?? session.created_at ?? new Date().toISOString(),
-    updatedAt: session.updatedAt ?? session.updated_at ?? new Date().toISOString(),
-    messages: messages.map((message: any) => ({
-      id: message.id,
-      role: message.role,
-      content: message.content,
-      createdAt: message.createdAt ?? message.created_at ?? new Date().toISOString(),
-      sources: Array.isArray(message.sources) ? message.sources : [],
-    })),
-  };
-}
-
 function toChatMessage(message: StudySessionRecord["messages"][number]): ChatMessage {
   return {
     id: message.id,
@@ -107,20 +52,40 @@ function sessionToMessages(session: StudySessionRecord | null | undefined): Chat
 }
 
 export function StudyWorkspace() {
-  const router = useRouter();
-  const { user, ready, loading: authLoading, signOut } = useAuth();
-  const [sessions, setSessions] = useState<StudySessionRecord[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-  const [loadingSessions, setLoadingSessions] = useState(true);
+  const { user, ready, loading: authLoading } = useAuth();
+  
+  const {
+    sessions,
+    activeSessionId,
+    setActiveSessionId,
+    loadingSessions,
+    createSession,
+    upsertSession,
+    appendMessage,
+  } = useDashboard();
+
+  const searchParams = useSearchParams();
+  const sessionParam = searchParams.get("session");
+
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [chatCourseId, setChatCourseId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
+
+  // Sync session search query param to active session
+  useEffect(() => {
+    if (sessionParam && sessionParam !== activeSessionId) {
+      setActiveSessionId(sessionParam);
+    } else if (!sessionParam && activeSessionId && sessions.length > 0) {
+      // If we navigated to `/chat` with no param, reset to first session or null
+      // Let's reset to null to show the new chat page
+      setActiveSessionId(null);
+    }
+  }, [sessionParam, activeSessionId, setActiveSessionId, sessions.length]);
 
   const activeSession = useMemo(
     () => sessions.find((session) => session.id === activeSessionId) ?? null,
@@ -129,15 +94,6 @@ export function StudyWorkspace() {
 
   const activeMessages = useMemo(() => sessionToMessages(activeSession), [activeSession]);
   const hasMessages = activeMessages.length > 0;
-  const showSessionListLoading = loadingSessions && sessions.length === 0;
-
-  const filteredSessions = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return sessions;
-    return sessions.filter((session) => {
-      return [session.title, session.topicCategory, session.lastMessage].some((value) => value.toLowerCase().includes(normalizedQuery));
-    });
-  }, [query, sessions]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -150,115 +106,21 @@ export function StudyWorkspace() {
     setIsNearBottom(distanceFromBottom < 96);
   };
 
+  // Scroll to bottom on session change or when new messages arrive (only if near bottom)
+  const lastMessageCount = useRef(activeMessages.length);
+  const lastActiveSessionId = useRef(activeSessionId);
+
   useEffect(() => {
-    if (isNearBottom) {
+    const sessionChanged = activeSessionId !== lastActiveSessionId.current;
+    const newMessages = activeMessages.length > lastMessageCount.current;
+    
+    lastActiveSessionId.current = activeSessionId;
+    lastMessageCount.current = activeMessages.length;
+
+    if (sessionChanged || sending || (newMessages && isNearBottom)) {
       scrollToBottom();
     }
-  }, [activeMessages.length, sending, activeSessionId, isNearBottom]);
-
-  useEffect(() => {
-    if (!ready || !user) {
-      setSessions([]);
-      setActiveSessionId(null);
-      setLoadingSessions(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    void (async () => {
-      setLoadingSessions(true);
-      setError(null);
-
-      try {
-        const response = await fetch("/api/study-sessions", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        const payload = (await response.json()) as SessionsApiResponse;
-
-        if (cancelled) return;
-
-        if (!response.ok || !payload.success) {
-          throw new Error(payload.error?.message || "Unable to load study sessions.");
-        }
-
-        const nextSessions = sortSessions((payload.data?.sessions ?? []).map(normalizeSession));
-        setSessions(nextSessions);
-        if (nextSessions.length > 0) {
-          setActiveSessionId(nextSessions[0].id);
-        }
-      } catch (loadError) {
-        if (!cancelled) setError(loadError instanceof Error ? loadError.message : "Unable to load study sessions.");
-      } finally {
-        if (!cancelled) setLoadingSessions(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [ready, user]);
-
-  function upsertSession(session: StudySessionRecord) {
-    const normalizedSession = normalizeSession(session);
-    setSessions((current) => {
-      const withoutCurrent = current.filter((item) => item.id !== normalizedSession.id);
-      return sortSessions([normalizedSession, ...withoutCurrent]);
-    });
-    setActiveSessionId(normalizedSession.id);
-  }
-
-  function appendMessage(sessionId: string, message: ChatMessage) {
-    setSessions((current) =>
-      sortSessions(
-        current.map((session) => {
-          if (session.id !== sessionId) return session;
-          return {
-            ...session,
-            lastMessage: message.content,
-            updatedAt: new Date(message.timestamp).toISOString(),
-            messages: [
-              ...session.messages,
-              {
-                id: message.id,
-                role: message.role,
-                content: message.content,
-                createdAt: new Date(message.timestamp).toISOString(),
-                sources: message.sources ?? [],
-              },
-            ],
-          };
-        })
-      )
-    );
-  }
-
-  async function createSession(firstPrompt = "") {
-    const response = await fetch("/api/study-sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        firstPrompt,
-        title: firstPrompt ? undefined : DEFAULT_STUDY_SESSION_TITLE,
-      }),
-    });
-
-    const payload = (await response.json()) as SessionCreateApiResponse;
-
-    if (!response.ok || !payload.success || !payload.data?.session) {
-      throw new Error(payload.error?.message || "Unable to create a study session.");
-    }
-
-    upsertSession(payload.data.session);
-    return payload.data.session;
-  }
-
-  async function handleNewSession() {
-    if (sending || loadingSessions) return;
-    setError(null);
-    setActiveSessionId(null); // Clear active session to show empty state
-    if (window.innerWidth < 768) setMobileSidebarOpen(false);
-  }
+  }, [activeMessages.length, sending, activeSessionId]);
 
   async function handleSend(text: string) {
     const trimmed = text.trim();
@@ -323,8 +185,6 @@ export function StudyWorkspace() {
     }
   }
 
-  const [isUploading, setIsUploading] = useState(false);
-
   async function handleUpload(file: File) {
     if (loadingSessions || authLoading || !ready) return;
     
@@ -334,7 +194,6 @@ export function StudyWorkspace() {
     try {
       let sessionForRequest = activeSession;
       if (!sessionForRequest) {
-        // If no session exists, create a generic one so we can attach the PDF to it
         sessionForRequest = await createSession("Uploaded a document for analysis");
       }
 
@@ -342,7 +201,6 @@ export function StudyWorkspace() {
       formData.append("file", file);
       formData.append("sessionId", sessionForRequest.id);
 
-      // Add a temporary system message to let user know it's analyzing
       const uploadingMsg: ChatMessage = {
         id: `sys-${Date.now()}`,
         role: "assistant",
@@ -362,7 +220,6 @@ export function StudyWorkspace() {
          throw new Error(payload.error || "Failed to upload document");
       }
 
-      // Add success message
       const successMsg: ChatMessage = {
         id: `sys-${Date.now() + 1}`,
         role: "assistant",
@@ -380,216 +237,78 @@ export function StudyWorkspace() {
   }
 
   return (
-    <div className="flex h-full w-full bg-[#141414] sm:bg-[#0a0a0a]">
-      {/* Desktop Sidebar */}
-      <aside
-        className={`hidden md:flex flex-col bg-[#141414] transition-all duration-300 ease-in-out ${
-          sidebarOpen ? "w-[260px] px-3 py-3" : "w-0 px-0 opacity-0 overflow-hidden"
-        }`}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <Button
-            onClick={handleNewSession}
-            variant="ghost"
-            className="flex-1 justify-start gap-2 h-10 hover:bg-[#202020] text-slate-200"
-          >
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500 text-black">
-              <Brain className="h-3 w-3" />
-            </div>
-            <span className="font-medium">New chat</span>
-          </Button>
-          <Button
-            onClick={() => setSidebarOpen(false)}
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 text-slate-400 hover:text-slate-200 hover:bg-[#202020] ml-2 shrink-0"
-          >
-            <PanelLeftClose className="h-5 w-5" />
-          </Button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto mt-2">
-          {showSessionListLoading ? (
-            <div className="text-xs text-slate-500 px-3 py-2">Loading...</div>
-          ) : filteredSessions.length > 0 ? (
-            <div className="space-y-0.5">
-              <div className="text-xs font-semibold text-slate-500 px-3 py-2 mb-1">Today</div>
-              {filteredSessions.map((session) => (
-                <button
-                  key={session.id}
-                  onClick={() => setActiveSessionId(session.id)}
-                  className={`w-full text-left px-3 py-2 text-sm rounded-lg truncate transition-colors ${
-                    session.id === activeSessionId ? "bg-[#202020] text-white" : "text-slate-300 hover:bg-[#202020] hover:text-white"
-                  }`}
-                >
-                  {session.title || "Untitled Session"}
-                </button>
-              ))}
-            </div>
-          ) : (
-             <div className="text-xs text-slate-500 px-3 py-2">No history</div>
-          )}
-        </div>
-
-        <div className="mt-auto pt-4 border-t border-white/5">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-slate-300 hover:text-white hover:bg-[#202020]"
-            onClick={async () => {
-              await signOut();
-              router.push("/");
-            }}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Log out
-          </Button>
-        </div>
-      </aside>
-
-      {/* Mobile Sidebar Overlay */}
-      {mobileSidebarOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileSidebarOpen(false)} />
-          <aside className="relative flex w-[260px] flex-col bg-[#141414] px-3 py-3">
-             <div className="flex items-center justify-between mb-4">
-              <Button
-                onClick={handleNewSession}
-                variant="ghost"
-                className="flex-1 justify-start gap-2 h-10 hover:bg-[#202020] text-slate-200"
-              >
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500 text-black">
-                  <Brain className="h-3 w-3" />
-                </div>
-                <span className="font-medium">New chat</span>
-              </Button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto mt-2">
-              {filteredSessions.map((session) => (
-                <button
-                  key={session.id}
-                  onClick={() => { setActiveSessionId(session.id); setMobileSidebarOpen(false); }}
-                  className={`w-full text-left px-3 py-2 text-sm rounded-lg truncate transition-colors ${
-                    session.id === activeSessionId ? "bg-[#202020] text-white" : "text-slate-300 hover:bg-[#202020] hover:text-white"
-                  }`}
-                >
-                  {session.title || "Untitled Session"}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-auto pt-4 border-t border-white/5">
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-slate-300 hover:text-white hover:bg-[#202020]"
-                onClick={async () => { await signOut(); router.push("/"); }}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Log out
-              </Button>
-            </div>
-          </aside>
+    <div className="flex flex-col flex-1 h-full w-full relative min-w-0 bg-[#0a0a0a] overflow-hidden">
+      {error && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 w-full max-w-md p-4">
+           <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200 shadow-xl">
+             {error}
+           </div>
         </div>
       )}
 
-      {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col relative min-w-0 bg-[#0a0a0a]">
-        {/* Mobile Header & Sidebar Toggle */}
-        <div className="flex items-center justify-between p-3 md:absolute md:top-0 md:left-0 md:p-4 z-10 w-full">
-          {!sidebarOpen && (
-             <Button
-               variant="ghost"
-               size="icon"
-               onClick={() => setSidebarOpen(true)}
-               className="hidden md:flex h-10 w-10 text-slate-400 hover:text-slate-200 hover:bg-[#202020]"
-             >
-               <PanelLeftOpen className="h-5 w-5" />
-             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMobileSidebarOpen(true)}
-            className="md:hidden h-10 w-10 text-slate-400"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <span className="md:hidden font-medium text-slate-200">EduAgent</span>
-          <div className="w-10 md:hidden" /> {/* Spacer */}
+      {hasMessages ? (
+        <div 
+          className="flex-1 overflow-y-auto px-4 md:px-8 pb-32 pt-16 md:pt-20 scrollbar-hide"
+          ref={transcriptRef}
+          onScroll={handleTranscriptScroll}
+        >
+          <div className="mx-auto max-w-3xl flex flex-col gap-6">
+            {activeMessages.map((message) => (
+              <ChatMessageComponent key={message.id} message={message} />
+            ))}
+            {sending && (
+              <div className="flex justify-start">
+                <TypingIndicator />
+              </div>
+            )}
+            <div ref={messagesEndRef} className="h-4" />
+          </div>
         </div>
-
-        {error && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 w-full max-w-md p-4">
-             <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200 shadow-xl">
-               {error}
-             </div>
+      ) : (
+        <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-8 pb-32">
+          <h1 className="text-3xl md:text-4xl font-medium text-white mb-8">Where should we begin?</h1>
+          
+          <div className="w-full max-w-3xl">
+            <ChatInput
+              onSend={handleSend}
+              onUpload={handleUpload}
+              isUploading={isUploading}
+              disabled={sending || loadingSessions || authLoading || !ready}
+              courseId={chatCourseId ?? undefined}
+              onCourseId={(id) => setChatCourseId(id)}
+            />
           </div>
-        )}
 
-        {hasMessages ? (
-          <div 
-            className="flex-1 overflow-y-auto px-4 md:px-8 pb-32 pt-16 md:pt-20 scrollbar-hide"
-            ref={transcriptRef}
-            onScroll={handleTranscriptScroll}
-          >
-            <div className="mx-auto max-w-3xl flex flex-col gap-6">
-              {activeMessages.map((message) => (
-                <ChatMessageComponent key={message.id} message={message} />
-              ))}
-              {sending && (
-                <div className="flex justify-start">
-                  <TypingIndicator />
-                </div>
-              )}
-              <div ref={messagesEndRef} className="h-4" />
-            </div>
+          <div className="mt-8 flex flex-wrap justify-center gap-2 max-w-2xl">
+            {starterPrompts.map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() => handleSend(prompt)}
+                className="rounded-full border border-white/10 bg-[#141414] px-4 py-2 text-sm text-slate-300 transition-colors hover:bg-[#202020] hover:text-white"
+              >
+                {prompt}
+              </button>
+            ))}
           </div>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-8 pb-32">
-            <h1 className="text-3xl md:text-4xl font-medium text-white mb-8">Where should we begin?</h1>
-            
-            <div className="w-full max-w-3xl">
-              <ChatInput
-                onSend={handleSend}
-                onUpload={handleUpload}
-                isUploading={isUploading}
-                disabled={sending || loadingSessions || authLoading || !ready}
-                courseId={chatCourseId ?? undefined}
-                onCourseId={(id) => setChatCourseId(id)}
-              />
-            </div>
+        </div>
+      )}
 
-            <div className="mt-8 flex flex-wrap justify-center gap-2 max-w-2xl">
-              {starterPrompts.map((prompt) => (
-                <button
-                  key={prompt}
-                  onClick={() => handleSend(prompt)}
-                  className="rounded-full border border-white/10 bg-[#141414] px-4 py-2 text-sm text-slate-300 transition-colors hover:bg-[#202020] hover:text-white"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Floating Input (when active) */}
-        {hasMessages && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent p-4 pb-6">
-             <div className="mx-auto max-w-3xl">
-               <ChatInput
-                 onSend={handleSend}
-                 onUpload={handleUpload}
-                 isUploading={isUploading}
-                 disabled={sending || loadingSessions || authLoading || !ready}
-                 courseId={chatCourseId ?? undefined}
-                 onCourseId={(id) => setChatCourseId(id)}
-               />
-               <p className="text-center text-[11px] text-slate-500 mt-2">EduAgent can make mistakes. Consider verifying important information.</p>
-             </div>
-          </div>
-        )}
-      </main>
+      {/* Floating Input (when active) */}
+      {hasMessages && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent p-4 pb-6">
+           <div className="mx-auto max-w-3xl">
+             <ChatInput
+               onSend={handleSend}
+               onUpload={handleUpload}
+               isUploading={isUploading}
+               disabled={sending || loadingSessions || authLoading || !ready}
+               courseId={chatCourseId ?? undefined}
+               onCourseId={(id) => setChatCourseId(id)}
+             />
+             <p className="text-center text-[11px] text-slate-500 mt-2">EduAgent can make mistakes. Consider verifying important information.</p>
+           </div>
+        </div>
+      )}
     </div>
   );
 }

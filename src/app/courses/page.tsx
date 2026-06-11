@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, Plus, GraduationCap, Loader2, X } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { DashboardShell } from '@/components/layout/DashboardShell'
 
 interface Course {
   id: string
@@ -303,8 +304,9 @@ export default function CoursesPage() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <div className="max-w-6xl mx-auto px-6 py-10">
+    <DashboardShell>
+      <div className="h-full overflow-y-auto bg-[#0a0a0a]">
+        <div className="max-w-6xl mx-auto px-6 py-10">
 
         {/* ── Page Header ───────────────────────────────────────────── */}
         <div className="flex items-start justify-between mb-10">
@@ -429,6 +431,7 @@ export default function CoursesPage() {
         onClose={() => setModalOpen(false)}
         onCreated={handleCourseCreated}
       />
-    </div>
+      </div>
+    </DashboardShell>
   )
 }
