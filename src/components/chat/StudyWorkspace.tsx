@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, LogOut, Menu, Plus, Search, Brain, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import type { ChatMessage } from "@/lib/chat/types";
 import { DEFAULT_STUDY_SESSION_TITLE } from "@/lib/study-sessions/title";
 import type { StudySessionRecord } from "@/lib/study-sessions/types";
+import type { UploadedMaterialRecord } from "@/lib/uploads/types";
 
 type ApiErrorResponse = {
   code: string;
@@ -123,6 +124,74 @@ export function StudyWorkspace() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
+
+  const [activeSessionMaterials, setActiveSessionMaterials] = useState<UploadedMaterialRecord[]>([]);
+  const [loadingMaterials, setLoadingMaterials] = useState(false);
+
+  const refreshMaterials = useCallback(async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/materials?sessionId=${encodeURIComponent(sessionId)}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      const payload = await response.json();
+      if (response.ok && payload.success && payload.data?.materials) {
+        setActiveSessionMaterials(payload.data.materials);
+      }
+    } catch (err) {
+      console.error("Failed to refresh materials for session", err);
+    }
+  }, []);
+
+  const handleDeleteMaterial = useCallback(async (materialId: string) => {
+    if (!activeSessionId) return;
+    try {
+      const response = await fetch(`/api/materials/${materialId}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setActiveSessionMaterials((prev) => prev.filter((m) => m.id !== materialId));
+      } else {
+        const payload = await response.json();
+        throw new Error(payload.error?.message || "Failed to delete document");
+      }
+    } catch (err) {
+      console.error("Failed to delete document", err);
+      setError(err instanceof Error ? err.message : "Failed to delete document");
+    }
+  }, [activeSessionId]);
+
+  useEffect(() => {
+    if (!ready || !user || !activeSessionId) {
+      setActiveSessionMaterials([]);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingMaterials(true);
+
+    void (async () => {
+      try {
+        const response = await fetch(`/api/materials?sessionId=${encodeURIComponent(activeSessionId)}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        const payload = await response.json();
+        if (cancelled) return;
+        if (response.ok && payload.success && payload.data?.materials) {
+          setActiveSessionMaterials(payload.data.materials);
+        }
+      } catch (err) {
+        console.error("Failed to load materials for session", err);
+      } finally {
+        if (!cancelled) setLoadingMaterials(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, user, activeSessionId]);
 
   const activeSession = useMemo(
     () => sessions.find((session) => session.id === activeSessionId) ?? null,
@@ -366,6 +435,9 @@ export function StudyWorkspace() {
          throw new Error(payload.error || "Failed to upload document");
       }
 
+      // Refresh the session materials list immediately
+      await refreshMaterials(sessionForRequest.id);
+
       // Add success message
       const successMsg: ChatMessage = {
         id: `sys-${Date.now() + 1}`,
@@ -560,6 +632,8 @@ export function StudyWorkspace() {
                 disabled={sending || loadingSessions || authLoading || !ready}
                 courseId={chatCourseId ?? undefined}
                 onCourseId={(id) => setChatCourseId(id)}
+                materials={activeSessionMaterials}
+                onDeleteMaterial={handleDeleteMaterial}
               />
             </div>
 
@@ -588,6 +662,8 @@ export function StudyWorkspace() {
                  disabled={sending || loadingSessions || authLoading || !ready}
                  courseId={chatCourseId ?? undefined}
                  onCourseId={(id) => setChatCourseId(id)}
+                 materials={activeSessionMaterials}
+                 onDeleteMaterial={handleDeleteMaterial}
                />
                <p className="text-center text-[11px] text-slate-500 mt-2">EduAgent can make mistakes. Consider verifying important information.</p>
              </div>

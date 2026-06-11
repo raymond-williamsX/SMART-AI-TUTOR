@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Paperclip, ArrowUp, Globe, X } from "lucide-react";
+import { Paperclip, ArrowUp, Globe, X, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MentionPopover } from "./MentionPopover";
+import type { UploadedMaterialRecord } from "@/lib/uploads/types";
 
 type Course = {
   id: string;
@@ -18,6 +19,8 @@ type ChatInputProps = {
   isUploading?: boolean;
   courseId?: string;
   onCourseId?: (id: string | null) => void;
+  materials?: UploadedMaterialRecord[];
+  onDeleteMaterial?: (id: string) => void;
 };
 
 export function ChatInput({
@@ -27,6 +30,8 @@ export function ChatInput({
   isUploading,
   courseId,
   onCourseId,
+  materials = [],
+  onDeleteMaterial,
 }: ChatInputProps) {
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -193,6 +198,54 @@ export function ChatInput({
         isOpen={showMentionPopover}
         query={mentionQuery}
       />
+
+      {/* Attached materials chips */}
+      {materials.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-2 px-1 max-h-[120px] overflow-y-auto scrollbar-hide">
+          {materials.map((mat) => {
+            const isProcessing = mat.status === "processing" || mat.status === "uploaded";
+            const isFailed = mat.status === "failed";
+            
+            return (
+              <div
+                key={mat.id}
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 backdrop-blur-md shadow-sm transition-all hover:border-white/20"
+              >
+                {isProcessing ? (
+                  <Loader2 className="h-3.5 w-3.5 text-cyan-400 animate-spin" />
+                ) : (
+                  <FileText className="h-3.5 w-3.5 text-cyan-400" />
+                )}
+                
+                <span className="font-medium max-w-[150px] truncate" title={mat.fileName}>
+                  {mat.fileName}
+                </span>
+
+                {isProcessing && (
+                  <span className="text-[10px] text-cyan-400/80 animate-pulse">(analyzing)</span>
+                )}
+                {isFailed && (
+                  <span className="text-[10px] text-red-400" title={mat.errorMessage || "Failed"}>
+                    (failed)
+                  </span>
+                )}
+                
+                {onDeleteMaterial && (
+                  <button
+                    type="button"
+                    onClick={() => onDeleteMaterial(mat.id)}
+                    disabled={disabled}
+                    aria-label={`Remove ${mat.fileName}`}
+                    className="ml-1 rounded-full p-0.5 text-slate-500 hover:text-red-400 hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div className="flex w-full items-end gap-2 rounded-[1.5rem] bg-[#141414] border border-white/10 p-2 focus-within:border-cyan-500/30 transition-colors shadow-lg">
         <div className="flex items-center gap-1 mb-1">
