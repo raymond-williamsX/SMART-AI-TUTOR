@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from("courses")
-      .select("*")
+      .select("*, uploaded_materials(id)")
       .order("created_at", { ascending: false });
 
     if (error) {

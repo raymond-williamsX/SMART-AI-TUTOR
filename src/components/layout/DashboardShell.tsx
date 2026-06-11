@@ -116,7 +116,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                   isActive 
-                    ? "bg-cyan-500/10 text-cyan-400 border-l-2 border-cyan-500 font-medium" 
+                    ? "bg-cyan-500/10 text-cyan-400 font-medium" 
                     : "text-slate-300 hover:bg-[#202020] hover:text-white"
                 }`}
               >
