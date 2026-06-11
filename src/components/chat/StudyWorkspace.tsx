@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Brain, Loader2 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 import { ChatInput } from "./ChatInput";
 import { ChatMessage as ChatMessageComponent } from "./ChatMessage";
@@ -76,16 +76,16 @@ export function StudyWorkspace() {
   const transcriptRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
 
+  const router = useRouter();
+
   // Sync session search query param to active session
   useEffect(() => {
-    if (sessionParam && sessionParam !== activeSessionId) {
+    if (sessionParam) {
       setActiveSessionId(sessionParam);
-    } else if (!sessionParam && activeSessionId && sessions.length > 0) {
-      // If we navigated to `/chat` with no param, reset to first session or null
-      // Let's reset to null to show the new chat page
+    } else {
       setActiveSessionId(null);
     }
-  }, [sessionParam, activeSessionId, setActiveSessionId, sessions.length]);
+  }, [sessionParam, setActiveSessionId]);
 
   const activeSession = useMemo(
     () => sessions.find((session) => session.id === activeSessionId) ?? null,
@@ -130,10 +130,12 @@ export function StudyWorkspace() {
     setSending(true);
 
     let sessionForRequest = activeSession;
+    let isNewSession = false;
 
     try {
       if (!sessionForRequest) {
         sessionForRequest = await createSession(trimmed);
+        isNewSession = true;
       }
 
       const userMessage: ChatMessage = {
@@ -165,6 +167,9 @@ export function StudyWorkspace() {
 
       if (payload.data?.session) {
         upsertSession(payload.data.session);
+        if (isNewSession) {
+          router.replace(`/chat?session=${payload.data.session.id}`);
+        }
       } else if (payload.data?.message) {
         appendMessage(sessionForRequest.id, payload.data.message);
       }
@@ -193,8 +198,10 @@ export function StudyWorkspace() {
     
     try {
       let sessionForRequest = activeSession;
+      let isNewSession = false;
       if (!sessionForRequest) {
         sessionForRequest = await createSession("Uploaded a document for analysis");
+        isNewSession = true;
       }
 
       const formData = new FormData();
@@ -227,6 +234,10 @@ export function StudyWorkspace() {
         timestamp: Date.now(),
       };
       appendMessage(sessionForRequest.id, successMsg);
+
+      if (isNewSession) {
+        router.replace(`/chat?session=${sessionForRequest.id}`);
+      }
 
     } catch (uploadError) {
       const message = uploadError instanceof Error ? uploadError.message : "Failed to upload file.";

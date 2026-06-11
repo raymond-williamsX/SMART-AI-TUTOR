@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, Plus, GraduationCap, Loader2, X } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { DashboardShell } from '@/components/layout/DashboardShell'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
+import { UPLOADED_MATERIALS_BUCKET, buildUploadPath, getAcceptedUploadMimeTypes, isAllowedUploadMimeType } from '@/lib/uploads/constants'
 
 interface Course {
   id: string
@@ -13,9 +15,11 @@ interface Course {
   title: string
   description?: string
   created_at: string
+  uploaded_materials?: { id: string }[]
 }
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr?: string) {
+  if (!dateStr) return 'Unknown date'
   return new Date(dateStr).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -78,11 +82,13 @@ function AddCourseModal({ open, onClose, onCreated }: AddCourseModalProps) {
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [file, setFile] = useState<File | null>(null)
 
   function resetForm() {
     setCode('')
     setTitle('')
     setDescription('')
+    setFile(null)
     setError(null)
   }
 
@@ -109,11 +115,50 @@ function AddCourseModal({ open, onClose, onCreated }: AddCourseModalProps) {
           description: description.trim() || undefined,
         }),
       })
+      const data = await res.json()
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
         throw new Error(data?.error || 'Failed to create course.')
       }
-      const newCourse: Course = await res.json()
+      
+      const newCourse: Course = data.course;
+      
+      if (file && newCourse) {
+        try {
+          const supabase = createSupabaseBrowserClient();
+          if (!supabase) {
+            throw new Error('Supabase client not initialized');
+          }
+          const userRes = await supabase.auth.getUser();
+          const userId = userRes.data.user?.id;
+          
+          if (userId) {
+             const storagePath = buildUploadPath(userId, newCourse.id, file.name);
+             const { error: uploadError } = await supabase.storage.from(UPLOADED_MATERIALS_BUCKET).upload(storagePath, file, {
+               contentType: file.type || "application/octet-stream",
+               upsert: false,
+             });
+             
+             if (!uploadError) {
+               const { data: insertedRow } = await supabase.from('uploaded_materials').insert({
+                 user_id: userId,
+                 course_id: newCourse.id,
+                 file_name: file.name,
+                 file_type: file.type || "application/octet-stream",
+                 storage_path: storagePath,
+               }).select('id').single();
+               
+               if (insertedRow) {
+                 newCourse.uploaded_materials = [{ id: insertedRow.id }];
+                 // Trigger processing in background
+                 fetch(`/api/materials/${insertedRow.id}/process`, { method: "POST" }).catch(() => {});
+               }
+             }
+          }
+        } catch (uploadErr) {
+          console.error("Failed to upload course material", uploadErr);
+        }
+      }
+      
       onCreated(newCourse)
       handleClose()
     } catch (err: unknown) {
@@ -205,8 +250,30 @@ function AddCourseModal({ open, onClose, onCreated }: AddCourseModalProps) {
                     placeholder="Brief description of this course…"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    rows={3}
+                    rows={2}
                     className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none"
+                  />
+                </div>
+
+                {/* File Upload */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5 tracking-wide uppercase">
+                    Course Material <span className="text-slate-600">(PDF, DOCX)</span>
+                  </label>
+                  <input
+                    type="file"
+                    accept={getAcceptedUploadMimeTypes()}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f && isAllowedUploadMimeType(f.type)) {
+                        setFile(f);
+                        setError(null);
+                      } else if (f) {
+                        setError("Invalid file type. Please upload a PDF, DOCX, etc.");
+                        setFile(null);
+                      }
+                    }}
+                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/10 file:text-cyan-400 hover:file:bg-cyan-500/20 focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -391,7 +458,21 @@ export default function CoursesPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.06 }}
-                onClick={() => router.push(`/courses/${course.id}`)}
+                onClick={async () => {
+                  if (course.uploaded_materials && course.uploaded_materials.length > 0) {
+                    try {
+                      const matId = course.uploaded_materials[0].id;
+                      const res = await fetch(`/api/materials/${matId}/view`, { method: "POST" });
+                      const payload = await res.json();
+                      if (payload.success && payload.data?.signedUrl) {
+                        window.open(payload.data.signedUrl, "_blank", "noopener,noreferrer");
+                        return;
+                      }
+                    } catch (e) {}
+                  }
+                  // Fallback if no material
+                  alert("No material uploaded for this course yet, or preview failed.");
+                }}
                 className="group bg-[#141414] border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-colors cursor-pointer"
               >
                 {/* Card Header */}
