@@ -17,8 +17,6 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 
-// ─── Types ─────────────────────────────────────────────────────────────────
-
 type QuizType = "mcq" | "flashcard" | "short_answer";
 type Phase = "setup" | "quiz" | "results";
 
