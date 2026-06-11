@@ -48,7 +48,6 @@
 
 * {
   border-color: hsl(var(--border));
-  scroll-behavior: smooth;
 }
 
 }

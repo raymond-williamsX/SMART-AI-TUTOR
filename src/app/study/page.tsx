@@ -17,6 +17,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { DashboardShell } from '@/components/layout/DashboardShell';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -409,7 +410,7 @@ function InlineChat({
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function StudyPage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   // ── Phase ─────────────────────────────────────────────────────────────────
@@ -577,8 +578,9 @@ export default function StudyPage() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
-      <AnimatePresence mode="wait">
+    <DashboardShell>
+      <div className="h-full w-full flex flex-col min-h-0 bg-[#0a0a0a] text-white">
+        <AnimatePresence mode="wait">
         {/* ═══════════════════════════════ SETUP PHASE ══════════════════════════ */}
         {phase === 'setup' && (
           <motion.div
@@ -587,7 +589,7 @@ export default function StudyPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="min-h-screen flex items-center justify-center px-4"
+            className="h-full w-full flex items-center justify-center overflow-y-auto px-4 py-8"
           >
             <div className="w-full max-w-md">
               {/* Icon */}
@@ -678,7 +680,7 @@ export default function StudyPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="min-h-screen flex flex-col"
+            className="h-full w-full flex flex-col min-h-0 overflow-hidden"
           >
             {/* ── Header ── */}
             <header className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#141414] shrink-0">
@@ -771,7 +773,7 @@ export default function StudyPage() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="min-h-screen flex items-start justify-center px-4 py-16"
+            className="h-full w-full overflow-y-auto flex items-start justify-center px-4 py-16"
           >
             <div className="w-full max-w-2xl flex flex-col gap-6">
               {/* Header */}
@@ -902,7 +904,8 @@ export default function StudyPage() {
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
-    </div>
+        </AnimatePresence>
+      </div>
+    </DashboardShell>
   );
 }

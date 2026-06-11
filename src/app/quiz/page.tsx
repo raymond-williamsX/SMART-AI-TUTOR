@@ -15,6 +15,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { DashboardShell } from "@/components/layout/DashboardShell";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -527,8 +528,9 @@ export default function QuizPage() {
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0a0a0a] font-body">
-      {/* Header */}
+    <DashboardShell>
+      <div className="h-full overflow-y-auto bg-[#0a0a0a] font-body">
+        {/* Header */}
       <div className="border-b border-white/5 bg-[#0a0a0a]">
         <div className="max-w-4xl mx-auto px-6 py-5 flex items-center gap-3">
           <div className="h-9 w-9 rounded-xl bg-cyan-500/10 flex items-center justify-center">
@@ -935,6 +937,7 @@ export default function QuizPage() {
           )}
         </AnimatePresence>
       </div>
-    </div>
+      </div>
+    </DashboardShell>
   );
 }
