@@ -409,7 +409,7 @@ function InlineChat({
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function StudyPage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   // ── Phase ─────────────────────────────────────────────────────────────────
