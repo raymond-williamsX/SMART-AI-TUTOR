@@ -133,7 +133,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           
           {/* Search bar inside Recents */}
           <div className="relative px-2">
-            <Search className="absolute left-4.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
             <Input
               type="text"
               placeholder="Search chats..."
