@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Clock3, ExternalLink, FileText, FileUp, FolderOpen, Loader2, Plus, RefreshCw, Search, Trash2, UploadCloud } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, ExternalLink, FileText, FileUp, FolderOpen, Loader2, Plus, RefreshCw, Search, Trash2, UploadCloud, Brain } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { DEFAULT_UPLOAD_SESSION_TITLE, buildUploadPath, getAcceptedUploadMimeTypes, isAllowedUploadMimeType, UPLOADED_MATERIALS_BUCKET } from "@/lib/uploads/constants";
 import type { UploadedMaterialRecord } from "@/lib/uploads/types";
@@ -156,6 +157,7 @@ function getStatusIcon(status: UploadedMaterialRecord["status"]) {
 
 export function UploadWorkspace() {
   const { user, ready } = useAuth();
+  const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [sessions, setSessions] = useState<StudySessionRecord[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -622,6 +624,16 @@ export function UploadWorkspace() {
                 <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Session</p>
                 <p className="mt-2 text-base font-medium text-white">{activeSession?.title ?? "No session selected"}</p>
                 <p className="mt-2 text-sm text-slate-400">{activeSession?.topicCategory ?? "Select or create a session to begin."}</p>
+                {activeSession && (
+                  <Button
+                    type="button"
+                    onClick={() => router.push(`/chat?sessionId=${activeSession.id}`)}
+                    className="w-full mt-4 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl flex items-center justify-center gap-2"
+                  >
+                    <Brain className="h-4 w-4" />
+                    Continue Learning
+                  </Button>
+                )}
               </div>
               <div className="rounded-[1.25rem] border border-white/10 bg-slate-950/30 p-4">
                 <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Storage path</p>

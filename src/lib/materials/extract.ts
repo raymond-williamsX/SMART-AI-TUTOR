@@ -1,4 +1,5 @@
-import { PDFParse } from "pdf-parse";
+// @ts-ignore
+import * as pdf from "pdf-parse";
 import mammoth from "mammoth";
 import JSZip from "jszip";
 import { XMLParser } from "fast-xml-parser";
@@ -38,19 +39,26 @@ function collectTextNodes(value: unknown, output: string[] = []): string[] {
 }
 
 async function extractPdf(buffer: Buffer): Promise<ExtractedMaterialSegment[]> {
-  const parser = new PDFParse({ data: buffer });
+  const segments: ExtractedMaterialSegment[] = [];
 
   try {
+    const parser = new pdf.PDFParse({ data: buffer });
     const result = await parser.getText();
-    return result.pages
-      .map((page) => ({
-        page: page.num,
+    // result.pages contains array of PageTextResult
+    result.pages.forEach((page, index) => {
+      segments.push({
+        page: page.num || (index + 1),
         text: normalizeExtractedText(page.text),
-      }))
-      .filter((segment) => segment.text.length > 0);
-  } finally {
-    await parser.destroy();
+      });
+    });
+  } catch (error) {
+    console.error("[extract:pdf] pdf-parse failed:", error);
+    throw new Error(error instanceof Error ? error.message : "Failed to parse PDF document");
   }
+
+  // Ensure pages are sorted in order
+  segments.sort((a, b) => (a.page || 0) - (b.page || 0));
+  return segments.filter((segment) => segment.text.length > 0);
 }
 
 async function extractDocx(buffer: Buffer): Promise<ExtractedMaterialSegment[]> {

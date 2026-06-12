@@ -21,5 +21,5 @@ export const navigationItems: NavigationItem[] = [
   { label: "Courses", href: "/courses", icon: BookOpen },
   { label: "Study Mode", href: "/study", icon: CalendarDays },
   { label: "Quiz Generator", href: "/quiz", icon: Settings2 },
-  { label: "Upload", href: "/upload", icon: Upload },
+  { label: "My Materials", href: "/materials", icon: FolderOpen },
 ];
