@@ -22,12 +22,21 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.auth.getSession();
+  let initialSession = null;
+
+  try {
+    const { data } = await supabase.auth.getSession();
+    initialSession = data.session;
+  } catch (error) {
+    console.warn("[layout] failed to restore initial session", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
       <body className={`${headingFont.variable} ${bodyFont.variable} min-h-screen overflow-x-hidden bg-background font-body text-foreground antialiased`}>
-        <Providers initialSession={data.session}>{children}</Providers>
+        <Providers initialSession={initialSession}>{children}</Providers>
       </body>
     </html>
   );
