@@ -1,5 +1,5 @@
-// @ts-ignore
-import * as pdf from "pdf-parse";
+import { PDFParse } from "pdf-parse";
+import type { PageTextResult } from "pdf-parse";
 import mammoth from "mammoth";
 import JSZip from "jszip";
 import { XMLParser } from "fast-xml-parser";
@@ -42,10 +42,10 @@ async function extractPdf(buffer: Buffer): Promise<ExtractedMaterialSegment[]> {
   const segments: ExtractedMaterialSegment[] = [];
 
   try {
-    const parser = new pdf.PDFParse({ data: buffer });
+    const parser = new PDFParse({ data: buffer });
     const result = await parser.getText();
     // result.pages contains array of PageTextResult
-    result.pages.forEach((page, index) => {
+    result.pages.forEach((page: PageTextResult, index: number) => {
       segments.push({
         page: page.num || (index + 1),
         text: normalizeExtractedText(page.text),
