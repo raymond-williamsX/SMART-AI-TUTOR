@@ -1,5 +1,5 @@
-import { PDFParse } from "pdf-parse";
-import type { PageTextResult } from "pdf-parse";
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+const pdfParse: (dataBuffer: Buffer, options?: Record<string, unknown>) => Promise<{ numpages: number; text: string }> = require("pdf-parse/lib/pdf-parse.js");
 import mammoth from "mammoth";
 import JSZip from "jszip";
 import { XMLParser } from "fast-xml-parser";
@@ -40,17 +40,24 @@ function collectTextNodes(value: unknown, output: string[] = []): string[] {
 
 async function extractPdf(buffer: Buffer): Promise<ExtractedMaterialSegment[]> {
   const segments: ExtractedMaterialSegment[] = [];
+  let currentPage = 0;
+
+  const renderPage = async (pageData: {
+    getTextContent: () => Promise<{ items: Array<{ str: string }> }>;
+  }) => {
+    currentPage++;
+    const pageNum = currentPage;
+    const textContent = await pageData.getTextContent();
+    const pageText = textContent.items.map((item) => item.str).join(" ");
+    const normalized = normalizeExtractedText(pageText);
+    if (normalized) {
+      segments.push({ page: pageNum, text: normalized });
+    }
+    return pageText;
+  };
 
   try {
-    const parser = new PDFParse({ data: buffer });
-    const result = await parser.getText();
-    // result.pages contains array of PageTextResult
-    result.pages.forEach((page: PageTextResult, index: number) => {
-      segments.push({
-        page: page.num || (index + 1),
-        text: normalizeExtractedText(page.text),
-      });
-    });
+    await pdfParse(buffer, { pagerender: renderPage });
   } catch (error) {
     console.error("[extract:pdf] pdf-parse failed:", error);
     throw new Error(error instanceof Error ? error.message : "Failed to parse PDF document");
