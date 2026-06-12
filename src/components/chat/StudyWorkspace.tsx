@@ -12,10 +12,30 @@ import { useAuth } from "@/hooks/use-auth";
 import type { ChatMessage } from "@/lib/chat/types";
 import type { StudySessionRecord } from "@/lib/study-sessions/types";
 import type { UploadedMaterialRecord } from "@/lib/uploads/types";
+import { DEFAULT_STUDY_SESSION_TITLE } from "@/lib/study-sessions/title";
+import { useDashboard } from "@/context/dashboard-context";
 
 type ApiErrorResponse = {
   code: string;
   message: string;
+};
+
+type SessionsApiResponse = {
+  success: boolean;
+  requestId: string;
+  data?: {
+    sessions: StudySessionRecord[];
+  };
+  error?: ApiErrorResponse;
+};
+
+type SessionCreateApiResponse = {
+  success: boolean;
+  requestId: string;
+  data?: {
+    session: StudySessionRecord;
+  };
+  error?: ApiErrorResponse;
 };
 
 type ChatApiResponse = {
@@ -52,11 +72,46 @@ function sessionToMessages(session: StudySessionRecord | null | undefined): Chat
   return session.messages.map(toChatMessage);
 }
 
+function sortSessions(sessions: StudySessionRecord[] = []) {
+  return [...sessions].sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+}
+
+function normalizeSession(session: any): StudySessionRecord {
+  const messages = Array.isArray(session?.messages)
+    ? session.messages
+    : Array.isArray(session?.study_messages)
+      ? session.study_messages.map((message: any) => ({
+          id: message.id,
+          role: message.role,
+          content: message.content,
+          createdAt: message.created_at,
+          sources: Array.isArray(message.sources) ? message.sources : [],
+        }))
+      : [];
+
+  return {
+    id: session.id,
+    title: session.title,
+    topicCategory: session.topicCategory ?? session.topic_category ?? "General",
+    lastMessage: session.lastMessage ?? session.last_message ?? "",
+    createdAt: session.createdAt ?? session.created_at ?? new Date().toISOString(),
+    updatedAt: session.updatedAt ?? session.updated_at ?? new Date().toISOString(),
+    messages: messages.map((message: any) => ({
+      id: message.id,
+      role: message.role,
+      content: message.content,
+      createdAt: message.createdAt ?? message.created_at ?? new Date().toISOString(),
+      sources: Array.isArray(message.sources) ? message.sources : [],
+    })),
+  };
+}
+
 export function StudyWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramSessionId = searchParams.get("sessionId");
   const { user, ready, loading: authLoading, signOut } = useAuth();
+  const { setMobileSidebarOpen } = useDashboard();
   const [sessions, setSessions] = useState<StudySessionRecord[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -155,6 +210,11 @@ export function StudyWorkspace() {
       cancelled = true;
     };
   }, [ready, user, activeSessionId, logState]);
+
+  const activeSession = useMemo(
+    () => sessions.find((s) => s.id === activeSessionId) ?? null,
+    [sessions, activeSessionId]
+  );
 
   const activeMessages = useMemo(() => sessionToMessages(activeSession), [activeSession]);
   const hasMessages = activeMessages.length > 0;
@@ -449,46 +509,46 @@ export function StudyWorkspace() {
     <div className="flex flex-col flex-1 h-full w-full relative min-w-0 bg-[#0a0a0a] overflow-hidden">
       {error && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 w-full max-w-md p-4">
-           <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200 shadow-xl">
-             {error}
-           </div>
+          <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200 shadow-xl">
+            {error}
+          </div>
         </div>
       )}
 
-        {hasMessages ? (
-          <div 
-            className="flex-1 overflow-y-auto px-4 md:px-8 pb-32 pt-16 md:pt-20 scrollbar-hide"
-            ref={transcriptRef}
-            onScroll={handleTranscriptScroll}
-          >
-            <div className="mx-auto max-w-3xl flex flex-col gap-6">
-              {activeMessages.map((message) => (
-                <ChatMessageComponent key={message.id} message={message} />
-              ))}
-              {sending && (
-                <div className="flex justify-start">
-                  <TypingIndicator />
-                </div>
-              )}
-              <div ref={messagesEndRef} className="h-4" />
-            </div>
+      {hasMessages ? (
+        <div
+          className="flex-1 overflow-y-auto px-4 md:px-8 pb-32 pt-16 md:pt-20 scrollbar-hide"
+          ref={transcriptRef}
+          onScroll={handleTranscriptScroll}
+        >
+          <div className="mx-auto max-w-3xl flex flex-col gap-6">
+            {activeMessages.map((message) => (
+              <ChatMessageComponent key={message.id} message={message} />
+            ))}
+            {sending && (
+              <div className="flex justify-start">
+                <TypingIndicator />
+              </div>
+            )}
+            <div ref={messagesEndRef} className="h-4" />
           </div>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-8 pb-32">
-            <h1 className="text-3xl md:text-4xl font-medium text-white mb-8">Where should we begin?</h1>
-            
-            <div className="w-full max-w-3xl">
-              <ChatInput
-                onSend={handleSend}
-                onUpload={handleUpload}
-                isUploading={isUploading}
-                disabled={sending || loadingSessions || authLoading || !ready}
-                courseId={chatCourseId ?? undefined}
-                onCourseId={(id) => setChatCourseId(id)}
-                materials={activeSessionMaterials}
-                onDeleteMaterial={handleDeleteMaterial}
-              />
-            </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-8 pb-32">
+          <h1 className="text-3xl md:text-4xl font-medium text-white mb-8">Where should we begin?</h1>
+          
+          <div className="w-full max-w-3xl">
+            <ChatInput
+              onSend={handleSend}
+              onUpload={handleUpload}
+              isUploading={isUploading}
+              disabled={sending || loadingSessions || authLoading || !ready}
+              courseId={chatCourseId ?? undefined}
+              onCourseId={(id) => setChatCourseId(id)}
+              materials={activeSessionMaterials}
+              onDeleteMaterial={handleDeleteMaterial}
+            />
+          </div>
 
           <div className="mt-8 flex flex-wrap justify-center gap-2 max-w-2xl">
             {starterPrompts.map((prompt) => (
@@ -504,25 +564,24 @@ export function StudyWorkspace() {
         </div>
       )}
 
-        {/* Floating Input (when active) */}
-        {hasMessages && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent p-4 pb-6">
-             <div className="mx-auto max-w-3xl">
-               <ChatInput
-                 onSend={handleSend}
-                 onUpload={handleUpload}
-                 isUploading={isUploading}
-                 disabled={sending || loadingSessions || authLoading || !ready}
-                 courseId={chatCourseId ?? undefined}
-                 onCourseId={(id) => setChatCourseId(id)}
-                 materials={activeSessionMaterials}
-                 onDeleteMaterial={handleDeleteMaterial}
-               />
-               <p className="text-center text-[11px] text-slate-500 mt-2">EduAgent can make mistakes. Consider verifying important information.</p>
-             </div>
+      {/* Floating Input (when active) */}
+      {hasMessages && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent p-4 pb-6">
+          <div className="mx-auto max-w-3xl">
+            <ChatInput
+              onSend={handleSend}
+              onUpload={handleUpload}
+              isUploading={isUploading}
+              disabled={sending || loadingSessions || authLoading || !ready}
+              courseId={chatCourseId ?? undefined}
+              onCourseId={(id) => setChatCourseId(id)}
+              materials={activeSessionMaterials}
+              onDeleteMaterial={handleDeleteMaterial}
+            />
+            <p className="text-center text-[11px] text-slate-500 mt-2">EduAgent can make mistakes. Consider verifying important information.</p>
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 }

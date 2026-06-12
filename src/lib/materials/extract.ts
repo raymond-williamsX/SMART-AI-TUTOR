@@ -1,5 +1,5 @@
 // @ts-ignore
-import pdf from "pdf-parse/lib/pdf-parse.js";
+import * as pdf from "pdf-parse";
 import mammoth from "mammoth";
 import JSZip from "jszip";
 import { XMLParser } from "fast-xml-parser";
@@ -42,26 +42,14 @@ async function extractPdf(buffer: Buffer): Promise<ExtractedMaterialSegment[]> {
   const segments: ExtractedMaterialSegment[] = [];
 
   try {
-    await pdf(buffer, {
-      pagerender: async (pageData: any) => {
-        const textContent = await pageData.getTextContent();
-        let lastY = 0;
-        let text = "";
-        for (const item of textContent.items) {
-          const y = item.transform[5];
-          if (lastY === y || lastY === 0) {
-            text += item.str;
-          } else {
-            text += "\n" + item.str;
-          }
-          lastY = y;
-        }
-        segments.push({
-          page: pageData.pageNumber || (pageData.pageIndex + 1),
-          text: normalizeExtractedText(text),
-        });
-        return text;
-      },
+    const parser = new pdf.PDFParse({ data: buffer });
+    const result = await parser.getText();
+    // result.pages contains array of PageTextResult
+    result.pages.forEach((page, index) => {
+      segments.push({
+        page: page.num || (index + 1),
+        text: normalizeExtractedText(page.text),
+      });
     });
   } catch (error) {
     console.error("[extract:pdf] pdf-parse failed:", error);
