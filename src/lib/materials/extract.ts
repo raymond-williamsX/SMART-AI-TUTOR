@@ -1,4 +1,5 @@
-import pdfParse from "pdf-parse";
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+const pdfParse: (dataBuffer: Buffer, options?: Record<string, unknown>) => Promise<{ numpages: number; text: string }> = require("pdf-parse/lib/pdf-parse.js");
 import mammoth from "mammoth";
 import JSZip from "jszip";
 import { XMLParser } from "fast-xml-parser";
