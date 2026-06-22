@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 type CookieToSet = { name: string; value: string; options: Record<string, unknown> };
 
-const PROTECTED_PATHS = ["/dashboard", "/chat", "/upload", "/schedule", "/progress"];
+const PROTECTED_PATHS = ["/chat", "/materials", "/schedule", "/progress", "/courses", "/study", "/quiz"];
 const AUTH_PATHS = ["/login", "/signup"];
 
 function isProtectedPath(pathname: string) {
@@ -16,7 +16,7 @@ function isAuthPath(pathname: string) {
 
 export async function proxy(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
     const response = NextResponse.next({
@@ -58,7 +58,8 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (isProtectedPath(pathname) && !user) {
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL("/", request.url);
+    loginUrl.searchParams.set("auth", "login");
     loginUrl.searchParams.set("redirectTo", pathname);
     const redirectResponse = NextResponse.redirect(loginUrl);
     redirectResponse.headers.set("Cache-Control", "private, no-store");
@@ -66,7 +67,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isAuthPath(pathname) && user) {
-    const redirectResponse = NextResponse.redirect(new URL("/dashboard", request.url));
+    const redirectResponse = NextResponse.redirect(new URL("/chat", request.url));
     redirectResponse.headers.set("Cache-Control", "private, no-store");
     return redirectResponse;
   }
@@ -75,5 +76,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/chat/:path*", "/upload/:path*", "/schedule/:path*", "/progress/:path*", "/login", "/signup"],
+  matcher: ["/chat/:path*", "/materials/:path*", "/schedule/:path*", "/progress/:path*", "/courses/:path*", "/study/:path*", "/quiz/:path*", "/login", "/signup"],
 };

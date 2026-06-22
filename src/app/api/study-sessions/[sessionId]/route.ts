@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { generateStudySessionTitle } from "@/lib/study-sessions/title";
 
-export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
+export async function PATCH(req: Request, context: { params: Promise<{ sessionId: string }> }) {
   const requestId = crypto.randomUUID();
 
   try {
-    const { id } = await context.params;
+    const { sessionId } = await context.params;
     const supabase = await createSupabaseServerClient();
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
@@ -36,7 +36,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const { data: session, error } = await supabase
       .from("study_sessions")
       .update({ title: nextTitle })
-      .eq("id", id)
+      .eq("id", sessionId)
       .eq("user_id", user.id)
       .select("id,title,topic_category,last_message,created_at,updated_at")
       .single();
@@ -75,11 +75,11 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   }
 }
 
-export async function DELETE(_req: Request, context: { params: Promise<{ id: string }> }) {
+export async function DELETE(_req: Request, context: { params: Promise<{ sessionId: string }> }) {
   const requestId = crypto.randomUUID();
 
   try {
-    const { id } = await context.params;
+    const { sessionId } = await context.params;
     const supabase = await createSupabaseServerClient();
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
@@ -98,7 +98,7 @@ export async function DELETE(_req: Request, context: { params: Promise<{ id: str
       );
     }
 
-    const { error } = await supabase.from("study_sessions").delete().eq("id", id).eq("user_id", user.id);
+    const { error } = await supabase.from("study_sessions").delete().eq("id", sessionId).eq("user_id", user.id);
 
     if (error) {
       return NextResponse.json(

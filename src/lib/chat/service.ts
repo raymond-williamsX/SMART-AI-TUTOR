@@ -1,5 +1,5 @@
 import { generateText } from "@/lib/gemini/client";
-import type { ChatMessage } from "./types";
+import type { ChatMessage, ChatSource } from "./types";
 import { formatRagContext, retrieveMaterialContext } from "@/lib/materials/retrieval";
 
 const SYSTEM_PROMPT = `You are EduAgent AI, a professional AI tutor. When responding, do the following:
@@ -38,43 +38,38 @@ async function callGeminiAPI(prompt: string): Promise<string> {
 
 export async function getAIResponse(
   messages: ChatMessage[],
-  options?: {
-    userId?: string;
-    sessionId?: string;
-  }
+  sessionId?: string,
+  userId?: string
 ): Promise<ChatMessage> {
   // Keep recent context compact for predictable latency and token usage.
   const recentMessages = messages.slice(-8);
   const transcript = recentMessages
     .map((m) => `${m.role === "user" ? "Student" : "Tutor"}: ${m.content}`)
     .join("\n\n");
-  const latestUserMessage = [...messages].reverse().find((message) => message.role === "user" && message.content.trim());
-  let materialContext = "No uploaded-material context was retrieved for this question.";
-  let sources: ChatMessage["sources"] = [];
 
-  if (options?.userId && options.sessionId && latestUserMessage?.content) {
-    try {
-      const ragContext = await retrieveMaterialContext({
-        userId: options.userId,
-        sessionId: options.sessionId,
-        query: latestUserMessage.content,
-      });
-      materialContext = formatRagContext(ragContext.chunks);
-      sources = ragContext.sources;
-    } catch (error) {
-      console.error("[chat] RAG retrieval failed; continuing with general tutor mode", {
-        error: error instanceof Error ? error.message : String(error),
-      });
+  let contextText = "";
+  let sources: ChatSource[] = [];
+
+  if (sessionId && userId) {
+    const lastUserMessage = [...recentMessages].reverse().find((m) => m.role === "user");
+    if (lastUserMessage) {
+      try {
+        const ragResult = await retrieveMaterialContext({
+          userId,
+          sessionId,
+          query: lastUserMessage.content,
+        });
+        if (ragResult.chunks.length > 0) {
+          contextText = "\n\n=== RELEVANT CONTEXT FROM UPLOADED DOCUMENTS ===\n" + formatRagContext(ragResult.chunks);
+          sources = ragResult.sources;
+        }
+      } catch (e) {
+        console.error("[chat] RAG retrieval error:", e);
+      }
     }
   }
 
-  const prompt = `Uploaded material context:
-${materialContext}
-
-Conversation transcript:
-${transcript}
-
-Answer the student's latest question. If you used uploaded material context, make the answer faithful to that context. If not, answer as a general tutor.`;
+  const prompt = `Conversation transcript:\n${transcript}${contextText}`;
 
   const aiText = await callGeminiAPI(prompt);
 

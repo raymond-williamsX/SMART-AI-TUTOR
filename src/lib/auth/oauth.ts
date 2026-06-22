@@ -1,6 +1,6 @@
 import { getAppUrl } from "@/lib/supabase/config";
 
-export function buildOAuthRedirectUrl(nextPath = "/dashboard") {
+export function buildOAuthRedirectUrl(nextPath = "/chat") {
   const appUrl = getAppUrl();
 
   if (!appUrl) {

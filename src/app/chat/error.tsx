@@ -20,8 +20,8 @@ export default function ChatError({ error, reset }: { error: Error & { digest?: 
           <button onClick={reset} className="rounded-full bg-cyan-300 px-5 py-2.5 text-sm font-semibold text-slate-950">
             Retry chat
           </button>
-          <Link href="/dashboard" className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-200">
-            Back to dashboard
+          <Link href="/" className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-200">
+            Back to home
           </Link>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
+import { Brain, User } from "lucide-react";
 
 import type { ChatMessage as MsgType } from "@/lib/chat/types";
 import { cn } from "@/lib/utils";
@@ -45,86 +46,74 @@ export function ChatMessage({ message }: { message?: MsgType | null }) {
   } satisfies MsgType;
 
   const isUser = safeMessage.role === "user";
-  const timestampLabel = new Date(safeMessage.timestamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  const showTimestamp = hasMounted && safeMessage.timestamp > 0 && safeMessage.id !== "welcome-msg";
 
   const renderedContent = isUser ? (
-    <div className="whitespace-pre-wrap break-words text-cyan-50">{safeMessage.content || "(empty message)"}</div>
+    <div className="whitespace-pre-wrap break-words text-slate-200 text-base leading-relaxed">{safeMessage.content || "(empty message)"}</div>
   ) : safeMessage.content ? (
-    <div className="markdown-content break-words">
+    <div className="markdown-content break-words text-slate-200 text-base leading-relaxed prose prose-invert max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight]}
         components={{
-          p: ({ children }) => <p className="mb-2.5 last:mb-0 leading-6 text-slate-200">{children}</p>,
-          h1: ({ children }) => <h1 className="mb-2 mt-4 font-heading text-xl font-semibold text-white first:mt-0">{children}</h1>,
-          h2: ({ children }) => <h2 className="mb-2 mt-3 font-heading text-lg font-semibold text-white first:mt-0">{children}</h2>,
-          h3: ({ children }) => <h3 className="mb-2 mt-3 font-heading text-base font-semibold text-white first:mt-0">{children}</h3>,
-          ul: ({ children }) => <ul className="mb-2.5 ml-4 list-disc space-y-1.5 text-slate-200">{children}</ul>,
-          ol: ({ children }) => <ol className="mb-2.5 ml-4 list-decimal space-y-1.5 text-slate-200">{children}</ol>,
-          li: ({ children }) => <li className="leading-6">{children}</li>,
+          p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+          h1: ({ children }) => <h1 className="mb-4 mt-6 font-heading text-2xl font-semibold text-white first:mt-0">{children}</h1>,
+          h2: ({ children }) => <h2 className="mb-3 mt-5 font-heading text-xl font-semibold text-white first:mt-0">{children}</h2>,
+          h3: ({ children }) => <h3 className="mb-3 mt-4 font-heading text-lg font-semibold text-white first:mt-0">{children}</h3>,
+          ul: ({ children }) => <ul className="mb-4 ml-6 list-disc space-y-2">{children}</ul>,
+          ol: ({ children }) => <ol className="mb-4 ml-6 list-decimal space-y-2">{children}</ol>,
+          li: ({ children }) => <li>{children}</li>,
           blockquote: ({ children }) => (
-            <blockquote className="mb-2.5 border-l-2 border-cyan-300/40 pl-3 italic text-slate-300">{children}</blockquote>
+            <blockquote className="mb-4 border-l-4 border-slate-700 pl-4 italic text-slate-300">{children}</blockquote>
           ),
           a: ({ children, href }) => (
-            <a href={href ?? "#"} className="text-cyan-300 underline decoration-cyan-300/40 underline-offset-4 hover:text-cyan-200">
+            <a href={href ?? "#"} className="text-cyan-400 underline decoration-cyan-400/30 underline-offset-4 hover:text-cyan-300">
               {children}
             </a>
           ),
           code: ({ children, className, inline }: any) =>
             inline ? (
-              <code className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[0.85em] text-cyan-100">{children}</code>
+              <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-sm text-cyan-200">{children}</code>
             ) : (
-              <code className={cn("block overflow-x-auto whitespace-pre rounded-xl border border-white/10 bg-slate-950/90 p-3 font-mono text-[13px] text-slate-100", className)}>
+              <code className={cn("block overflow-x-auto whitespace-pre rounded-lg bg-[#141414] border border-white/10 p-4 font-mono text-sm text-slate-200 mb-4", className)}>
                 {children}
               </code>
             ),
-          pre: ({ children }) => <pre className="mb-3 overflow-x-auto rounded-xl border border-white/10 bg-slate-950/90 p-0">{children}</pre>,
+          pre: ({ children }) => <pre className="mb-4 overflow-x-auto rounded-lg bg-[#141414] border border-white/10 p-0">{children}</pre>,
         }}
       >
         {safeMessage.content}
       </ReactMarkdown>
     </div>
   ) : (
-    <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">Message unavailable.</div>
+    <div className="text-slate-400 italic">Message unavailable.</div>
   );
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.18 }}
-      className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}
+      transition={{ duration: 0.2 }}
+      className="flex w-full gap-4 group px-2 sm:px-0"
     >
-      <div
-        className={cn(
-          "w-full max-w-[min(100%,42rem)] rounded-[1.25rem] border px-3 py-2.5 shadow-glow sm:max-w-[88%]",
-          isUser
-            ? "border-cyan-300/15 bg-gradient-to-br from-cyan-400/12 to-sky-400/6 text-cyan-50"
-            : "border-white/10 bg-white/[0.04] text-slate-200"
-        )}
-      >
-        <div className="mb-1.5 flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-          <span>{isUser ? "You" : "EduAgent"}</span>
-          <span suppressHydrationWarning>{showTimestamp ? timestampLabel : ""}</span>
-        </div>
-        <div className={cn("text-[13px] leading-6 sm:text-sm", isUser ? "text-cyan-50" : "text-slate-100")}>{renderedContent}</div>
-        {!isUser && safeMessage.sources && safeMessage.sources.length > 0 ? (
-          <div className="mt-3 rounded-2xl border border-cyan-300/15 bg-cyan-300/5 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-[0.22em] text-cyan-100/80">Based on</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {safeMessage.sources.map((source) => (
-                <span
-                  key={`${source.documentId}-${source.chunkId ?? source.page ?? source.slide ?? source.section ?? source.documentName}`}
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-200"
-                >
-                  {source.documentName}
-                  <span className="text-slate-400"> · {sourceDetail(source)}</span>
-                </span>
-              ))}
-            </div>
+      <div className="flex-shrink-0 flex flex-col items-center">
+        {isUser ? (
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-slate-300">
+            <User className="h-5 w-5" />
           </div>
-        ) : null}
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+            <Brain className="h-5 w-5" />
+          </div>
+        )}
+      </div>
+      
+      <div className="flex-1 min-w-0 pt-1">
+        <div className="font-semibold text-slate-100 mb-1">
+          {isUser ? "You" : "EduAgent"}
+        </div>
+        <div className="text-slate-200">
+          {renderedContent}
+        </div>
       </div>
     </motion.div>
   );

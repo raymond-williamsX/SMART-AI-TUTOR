@@ -5,6 +5,7 @@ import {
   Settings2,
   MessageSquareText,
   FolderOpen,
+  Upload,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -16,10 +17,9 @@ export type NavigationItem = {
 };
 
 export const navigationItems: NavigationItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: BarChart3 },
   { label: "AI Chat", href: "/chat", icon: MessageSquareText },
-  { label: "My Materials", href: "/upload", icon: FolderOpen },
-  { label: "Schedule", href: "/schedule", icon: CalendarDays },
-  { label: "Progress", href: "/progress", icon: BookOpen },
-  { label: "Settings", href: "/settings", icon: Settings2 },
+  { label: "Courses", href: "/courses", icon: BookOpen },
+  { label: "Study Mode", href: "/study", icon: CalendarDays },
+  { label: "Quiz Generator", href: "/quiz", icon: Settings2 },
+  { label: "My Materials", href: "/materials", icon: FolderOpen },
 ];

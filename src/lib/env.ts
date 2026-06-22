@@ -7,12 +7,9 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
-  // Prefer server-side key `GEMINI_API_KEY`. `NEXT_PUBLIC_GEMINI_API_KEY` is kept optional
-  // for backwards-compatibility but should NOT be used in production (it exposes the key).
   GEMINI_API_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_GEMINI_API_KEY: z.string().min(1).optional(),
   ELASTICSEARCH_URL: z.string().url().optional(),
-  // Accept both `ELASTICSEARCH_API_KEY` and `ELASTIC_SEARCH_API_KEY` from Vercel
   ELASTICSEARCH_API_KEY: z.string().min(1).optional(),
   ELASTIC_SEARCH_API_KEY: z.string().min(1).optional(),
 });
