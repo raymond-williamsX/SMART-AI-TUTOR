@@ -295,7 +295,20 @@ function InlineChat({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: trimmed,
+          messages: [
+            ...messages.map((m) => ({
+              id: m.id,
+              role: m.role,
+              content: m.content,
+              timestamp: Date.now(),
+            })),
+            {
+              id: userMsg.id,
+              role: 'user',
+              content: trimmed,
+              timestamp: Date.now(),
+            },
+          ],
           sessionId,
           courseId,
         }),

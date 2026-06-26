@@ -109,13 +109,19 @@ function normalizeSession(session: any): StudySessionRecord {
 export function StudyWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const paramSessionId = searchParams.get("sessionId");
-  const { user, ready, loading: authLoading, signOut } = useAuth();
-  const { setMobileSidebarOpen } = useDashboard();
-  const [sessions, setSessions] = useState<StudySessionRecord[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-  const [loadingSessions, setLoadingSessions] = useState(true);
+  const paramSessionId = searchParams.get("session");
+  const { user, ready, loading: authLoading } = useAuth();
+  const {
+    sessions,
+    activeSessionId,
+    setActiveSessionId,
+    loadingSessions,
+    createSession,
+    upsertSession,
+    appendMessage,
+    setMobileSidebarOpen,
+  } = useDashboard();
+
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatCourseId, setChatCourseId] = useState<string | null>(null);
@@ -128,31 +134,45 @@ export function StudyWorkspace() {
   const [activeSessionMaterials, setActiveSessionMaterials] = useState<UploadedMaterialRecord[]>([]);
   const [loadingMaterials, setLoadingMaterials] = useState(false);
 
-  // Helper to log state consistently
-  const logState = useCallback((label: string, overrideMaterials?: UploadedMaterialRecord[]) => {
-    const activeSess = sessions.find((s) => s.id === activeSessionId) ?? null;
-    const msgCount = activeSess ? activeSess.messages.length : 0;
-    const mats = overrideMaterials ?? activeSessionMaterials;
-    console.log(`[DOC_DEBUG] ${label}: sessionId=${activeSessionId} documents=${mats.length} documentIds=${JSON.stringify(mats.map(m => m.id))} messageCount=${msgCount} attachmentCount=${mats.length}`);
-  }, [activeSessionId, activeSessionMaterials, sessions]);
+  const initialSyncRef = useRef(false);
 
+  // Sync activeSessionId with search query param "session"
+  useEffect(() => {
+    if (!ready || authLoading) return;
+
+    if (paramSessionId) {
+      if (activeSessionId !== paramSessionId) {
+        setActiveSessionId(paramSessionId);
+      }
+      initialSyncRef.current = true;
+    } else {
+      if (!initialSyncRef.current) {
+        if (sessions.length > 0) {
+          router.replace(`/chat?session=${sessions[0].id}`);
+        }
+        initialSyncRef.current = true;
+      } else {
+        if (activeSessionId !== null) {
+          setActiveSessionId(null);
+        }
+      }
+    }
+  }, [ready, authLoading, paramSessionId, activeSessionId, sessions, setActiveSessionId, router]);
 
   const refreshMaterials = useCallback(async (sessionId: string) => {
     try {
-      logState(`refreshMaterials start for sessionId=${sessionId}`);
       const response = await fetch(`/api/materials?sessionId=${encodeURIComponent(sessionId)}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
       const payload = await response.json();
       if (response.ok && payload.success && payload.data?.materials) {
-        logState(`refreshMaterials success for sessionId=${sessionId}`, payload.data.materials);
         setActiveSessionMaterials(payload.data.materials);
       }
     } catch (err) {
       console.error("Failed to refresh materials for session", err);
     }
-  }, [logState]);
+  }, []);
 
   const handleDeleteMaterial = useCallback(async (materialId: string) => {
     if (!activeSessionId) return;
@@ -172,10 +192,9 @@ export function StudyWorkspace() {
     }
   }, [activeSessionId]);
 
+  // Load materials when activeSessionId changes
   useEffect(() => {
-    logState(`useEffect load materials trigger: ready=${ready} user=${!!user}`);
     if (!ready || !user || !activeSessionId) {
-      logState("useEffect load materials early exit/clear");
       setActiveSessionMaterials([]);
       return;
     }
@@ -190,12 +209,8 @@ export function StudyWorkspace() {
           headers: { "Content-Type": "application/json" },
         });
         const payload = await response.json();
-        if (cancelled) {
-          logState("useEffect load materials completed but cancelled");
-          return;
-        }
+        if (cancelled) return;
         if (response.ok && payload.success && payload.data?.materials) {
-          logState("useEffect load materials success", payload.data.materials);
           setActiveSessionMaterials(payload.data.materials);
         }
       } catch (err) {
@@ -206,10 +221,9 @@ export function StudyWorkspace() {
     })();
 
     return () => {
-      logState("useEffect load materials cleanup/cancelled");
       cancelled = true;
     };
-  }, [ready, user, activeSessionId, logState]);
+  }, [ready, user, activeSessionId]);
 
   const activeSession = useMemo(
     () => sessions.find((s) => s.id === activeSessionId) ?? null,
@@ -218,26 +232,6 @@ export function StudyWorkspace() {
 
   const activeMessages = useMemo(() => sessionToMessages(activeSession), [activeSession]);
   const hasMessages = activeMessages.length > 0;
-
-  // Render logs
-  logState("render StudyWorkspace");
-
-  useEffect(() => {
-    logState("useEffect activeSessionMaterials or activeMessages state update");
-  }, [activeSessionMaterials, activeMessages, logState]);
-
-  useEffect(() => {
-    logState("useEffect activeSessionId or sessions state update");
-  }, [activeSessionId, sessions, logState]);
-  const showSessionListLoading = loadingSessions && sessions.length === 0;
-
-  const filteredSessions = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return sessions;
-    return sessions.filter((session) => {
-      return [session.title, session.topicCategory, session.lastMessage].some((value) => value.toLowerCase().includes(normalizedQuery));
-    });
-  }, [query, sessions]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -266,111 +260,11 @@ export function StudyWorkspace() {
     }
   }, [activeMessages.length, sending, activeSessionId, isNearBottom]);
 
-  useEffect(() => {
-    logState(`useEffect session reload trigger: ready=${ready} user=${!!user}`);
-    if (!ready || !user) {
-      setSessions([]);
-      setActiveSessionId(null);
-      setLoadingSessions(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    void (async () => {
-      setLoadingSessions(true);
-      setError(null);
-
-      try {
-        const response = await fetch("/api/study-sessions", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        const payload = (await response.json()) as SessionsApiResponse;
-
-        if (cancelled) return;
-
-        if (!response.ok || !payload.success) {
-          throw new Error(payload.error?.message || "Unable to load study sessions.");
-        }
-
-        const nextSessions = sortSessions((payload.data?.sessions ?? []).map(normalizeSession));
-        logState("session reload API response processing", activeSessionMaterials);
-        setSessions(nextSessions);
-        if (paramSessionId && nextSessions.some((session) => session.id === paramSessionId)) {
-          setActiveSessionId(paramSessionId);
-        } else if (nextSessions.length > 0) {
-          setActiveSessionId(nextSessions[0].id);
-        }
-      } catch (loadError) {
-        if (!cancelled) setError(loadError instanceof Error ? loadError.message : "Unable to load study sessions.");
-      } finally {
-        if (!cancelled) setLoadingSessions(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [ready, user, paramSessionId, logState]);
-
-  function upsertSession(session: StudySessionRecord) {
-    const normalizedSession = normalizeSession(session);
-    setSessions((current) => {
-      const withoutCurrent = current.filter((item) => item.id !== normalizedSession.id);
-      return sortSessions([normalizedSession, ...withoutCurrent]);
-    });
-    setActiveSessionId(normalizedSession.id);
-  }
-
-  function appendMessage(sessionId: string, message: ChatMessage) {
-    setSessions((current) =>
-      sortSessions(
-        current.map((session) => {
-          if (session.id !== sessionId) return session;
-          return {
-            ...session,
-            lastMessage: message.content,
-            updatedAt: new Date(message.timestamp).toISOString(),
-            messages: [
-              ...session.messages,
-              {
-                id: message.id,
-                role: message.role,
-                content: message.content,
-                createdAt: new Date(message.timestamp).toISOString(),
-                sources: message.sources ?? [],
-              },
-            ],
-          };
-        })
-      )
-    );
-  }
-
-  async function createSession(firstPrompt = "") {
-    const response = await fetch("/api/study-sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        firstPrompt,
-        title: firstPrompt ? undefined : DEFAULT_STUDY_SESSION_TITLE,
-      }),
-    });
-
-    const payload = (await response.json()) as SessionCreateApiResponse;
-
-    if (!response.ok || !payload.success || !payload.data?.session) {
-      throw new Error(payload.error?.message || "Unable to create a study session.");
-    }
-
-    upsertSession(payload.data.session);
-    return payload.data.session;
-  }
-
   async function handleNewSession() {
     if (sending || loadingSessions) return;
     setError(null);
-    setActiveSessionId(null); // Clear active session to show empty state
+    setActiveSessionId(null); // Clear active session in context
+    router.push("/chat");
     if (window.innerWidth < 768) setMobileSidebarOpen(false);
   }
 
@@ -480,9 +374,9 @@ export function StudyWorkspace() {
       }
 
       // Refresh the session materials list immediately
-      logState(`handleUpload calling refreshMaterials for sessionId=${sessionForRequest.id}`);
+      console.log(`handleUpload calling refreshMaterials for sessionId=${sessionForRequest.id}`);
       await refreshMaterials(sessionForRequest.id);
-      logState(`handleUpload refreshMaterials complete for sessionId=${sessionForRequest.id}`);
+      console.log(`handleUpload refreshMaterials complete for sessionId=${sessionForRequest.id}`);
 
       // Add success message
       const successMsg: ChatMessage = {

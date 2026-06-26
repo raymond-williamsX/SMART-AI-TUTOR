@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useMemo, useCallback, ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import type { ChatMessage } from "@/lib/chat/types";
 import type { StudySessionRecord } from "@/lib/study-sessions/types";
@@ -120,9 +120,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
         const nextSessions = sortSessions((payload.data?.sessions ?? []).map(normalizeSession));
         setSessions(nextSessions);
-        if (nextSessions.length > 0 && !activeSessionId) {
-          setActiveSessionId(nextSessions[0].id);
-        }
       } catch (loadError) {
         if (!cancelled) setError(loadError instanceof Error ? loadError.message : "Unable to load study sessions.");
       } finally {
@@ -133,16 +130,16 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, [ready, user]);
 
-  const upsertSession = (session: StudySessionRecord) => {
+  const upsertSession = useCallback((session: StudySessionRecord) => {
     const normalizedSession = normalizeSession(session);
     setSessions((current) => {
       const withoutCurrent = current.filter((item) => item.id !== normalizedSession.id);
       return sortSessions([normalizedSession, ...withoutCurrent]);
     });
     setActiveSessionId(normalizedSession.id);
-  };
+  }, []);
 
-  const appendMessage = (sessionId: string, message: ChatMessage) => {
+  const appendMessage = useCallback((sessionId: string, message: ChatMessage) => {
     setSessions((current) =>
       sortSessions(
         current.map((session) => {
@@ -165,9 +162,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         })
       )
     );
-  };
+  }, []);
 
-  const createSession = async (firstPrompt = "") => {
+  const createSession = useCallback(async (firstPrompt = "") => {
     const response = await fetch("/api/study-sessions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -186,7 +183,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const session = payload.data.session;
     upsertSession(session);
     return session;
-  };
+  }, [upsertSession]);
 
   const value = useMemo(
     () => ({
@@ -204,7 +201,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       upsertSession,
       appendMessage,
     }),
-    [sessions, activeSessionId, loadingSessions, error, sidebarOpen, mobileSidebarOpen]
+    [sessions, activeSessionId, loadingSessions, error, sidebarOpen, mobileSidebarOpen, createSession, upsertSession, appendMessage]
   );
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;

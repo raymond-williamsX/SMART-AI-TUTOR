@@ -406,7 +406,7 @@ export default function QuizPage() {
     try {
       const [coursesRes, materialsRes] = await Promise.allSettled([
         fetch("/api/courses"),
-        fetch("/api/upload"),
+        fetch("/api/materials"),
       ]);
 
       if (coursesRes.status === "fulfilled" && coursesRes.value.ok) {
