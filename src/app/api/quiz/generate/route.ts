@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { generateText } from "@/lib/gemini/client";
+import { searchIndex } from "@/lib/elastic/client";
+import { CHUNKS_INDEX } from "@/lib/materials/elastic";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +89,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { materialId, type = "mcq", count = 5 } = body;
+    const { materialId, courseId, type = "mcq", count = 5 } = body;
 
     const clampedCount = Math.min(Math.max(Number(count), 3), 15);
 
@@ -102,7 +104,43 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (material) {
-        materialContext = `The study material is titled: "${material.file_name}".`;
+        let fullText = "";
+        try {
+          const chunks = await searchIndex(CHUNKS_INDEX, {
+            query: {
+              bool: {
+                filter: [
+                  { term: { document_id: materialId } },
+                  { term: { user_id: userData.user.id } }
+                ]
+              }
+            },
+            sort: [{ chunk_index: "asc" }],
+            size: 20,
+            _source: ["chunk_text"]
+          });
+          const hits = (chunks as any)?.hits?.hits ?? [];
+          fullText = hits.map((h: any) => h._source?.chunk_text).join("\n\n");
+        } catch (e) {
+          console.warn("[quiz:generate] failed to fetch chunks from ElasticSearch", e);
+        }
+
+        if (fullText.trim()) {
+          materialContext = `The study material is titled: "${material.file_name}". Generate quiz questions STRICTLY based on the following document context:\n\n${fullText.slice(0, 15000)}`;
+        } else {
+          materialContext = `The study material is titled: "${material.file_name}". Generate quiz questions based on this study material.`;
+        }
+      }
+    } else if (courseId) {
+      const { data: course } = await supabase
+        .from("courses")
+        .select("code, title, description")
+        .eq("id", courseId)
+        .eq("user_id", userData.user.id)
+        .single();
+
+      if (course) {
+        materialContext = `The study context is for the course: "${course.code} — ${course.title}" (${course.description ?? "General study"}). Generate educational quiz questions covering the curriculum, main concepts and topics of this course.`;
       }
     }
 

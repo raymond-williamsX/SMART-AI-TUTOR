@@ -175,6 +175,7 @@ export async function searchMaterialEmbeddings(params: {
   sessionId?: string | null;
   queryEmbedding: number[];
   limit?: number;
+  documentIds?: string[];
 }) {
   await ensureMaterialIndices();
 
@@ -183,7 +184,9 @@ export async function searchMaterialEmbeddings(params: {
     { term: { status: "ready" } },
   ];
 
-  if (params.sessionId) {
+  if (params.documentIds && params.documentIds.length > 0) {
+    filters.push({ terms: { document_id: params.documentIds } });
+  } else if (params.sessionId) {
     filters.push({ term: { session_id: params.sessionId } });
   }
 

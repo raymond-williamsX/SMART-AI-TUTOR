@@ -5,7 +5,9 @@ import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
-import { Brain, User } from "lucide-react";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import { Brain, User, Clipboard, ClipboardCheck } from "lucide-react";
 
 import type { ChatMessage as MsgType } from "@/lib/chat/types";
 import { cn } from "@/lib/utils";
@@ -30,6 +32,47 @@ function sourceDetail(source: NonNullable<MsgType["sources"]>[number]) {
   return details.length > 0 ? details.join(" · ") : "Uploaded material";
 }
 
+function CodeBlock({ language, value }: { language: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  };
+
+  return (
+    <div className="relative rounded-lg border border-white/10 bg-[#141414] overflow-hidden my-4 group/code">
+      <div className="flex items-center justify-between px-4 py-1.5 bg-[#0f0f0f] border-b border-white/5 text-xs text-slate-400 font-mono">
+        <span className="uppercase">{language || "code"}</span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1 hover:text-white transition-colors p-1 rounded hover:bg-white/5"
+        >
+          {copied ? (
+            <>
+              <ClipboardCheck className="h-3.5 w-3.5 text-green-400" />
+              <span className="text-green-400 font-medium">Copied!</span>
+            </>
+          ) : (
+            <>
+              <Clipboard className="h-3.5 w-3.5" />
+              <span>Copy</span>
+            </>
+          )}
+        </button>
+      </div>
+      <div className="overflow-x-auto p-4 font-mono text-sm text-slate-200 scrollbar-thin">
+        <code className={language ? `language-${language}` : ""}>{value}</code>
+      </div>
+    </div>
+  );
+}
+
 export function ChatMessage({ message }: { message?: MsgType | null }) {
   const [hasMounted, setHasMounted] = useState(false);
 
@@ -52,8 +95,8 @@ export function ChatMessage({ message }: { message?: MsgType | null }) {
   ) : safeMessage.content ? (
     <div className="markdown-content break-words text-slate-200 text-base leading-relaxed prose prose-invert max-w-none">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeHighlight, rehypeKatex]}
         components={{
           p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
           h1: ({ children }) => <h1 className="mb-4 mt-6 font-heading text-2xl font-semibold text-white first:mt-0">{children}</h1>,
@@ -70,15 +113,22 @@ export function ChatMessage({ message }: { message?: MsgType | null }) {
               {children}
             </a>
           ),
-          code: ({ children, className, inline }: any) =>
-            inline ? (
-              <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-sm text-cyan-200">{children}</code>
-            ) : (
-              <code className={cn("block overflow-x-auto whitespace-pre rounded-lg bg-[#141414] border border-white/10 p-4 font-mono text-sm text-slate-200 mb-4", className)}>
-                {children}
-              </code>
-            ),
-          pre: ({ children }) => <pre className="mb-4 overflow-x-auto rounded-lg bg-[#141414] border border-white/10 p-0">{children}</pre>,
+          code: ({ node, inline, className, children, ...props }: any) => {
+            const match = /language-(\w+)/.exec(className || "");
+            const lang = match ? match[1] : "";
+            const content = String(children).replace(/\n$/, "");
+            
+            if (inline) {
+              return (
+                <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-sm text-cyan-200" {...props}>
+                  {children}
+                </code>
+              );
+            }
+
+            return <CodeBlock language={lang} value={content} />;
+          },
+          pre: ({ children }) => <>{children}</>,
         }}
       >
         {safeMessage.content}

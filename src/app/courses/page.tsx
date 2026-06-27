@@ -458,20 +458,8 @@ export default function CoursesPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.06 }}
-                onClick={async () => {
-                  if (course.uploaded_materials && course.uploaded_materials.length > 0) {
-                    try {
-                      const matId = course.uploaded_materials[0].id;
-                      const res = await fetch(`/api/materials/${matId}/view`, { method: "POST" });
-                      const payload = await res.json();
-                      if (payload.success && payload.data?.signedUrl) {
-                        window.open(payload.data.signedUrl, "_blank", "noopener,noreferrer");
-                        return;
-                      }
-                    } catch (e) {}
-                  }
-                  // Fallback if no material
-                  alert("No material uploaded for this course yet, or preview failed.");
+                onClick={() => {
+                  router.push(`/courses/${course.id}`);
                 }}
                 className="group bg-[#141414] border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-colors cursor-pointer"
               >

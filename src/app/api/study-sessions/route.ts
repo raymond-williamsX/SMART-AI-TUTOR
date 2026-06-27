@@ -12,6 +12,12 @@ function mapStudySessionRow(session: any): StudySessionRecord {
     lastMessage: session.last_message ?? "",
     createdAt: session.created_at,
     updatedAt: session.updated_at,
+    courseId: session.course_id ?? undefined,
+    status: session.status ?? "active",
+    durationSeconds: session.duration_seconds ?? 0,
+    topicsCovered: Array.isArray(session.topics_covered) ? session.topics_covered : [],
+    summary: session.summary ?? undefined,
+    notes: session.notes ?? undefined,
     messages: Array.isArray(session.study_messages)
         ? session.study_messages.map((message: any) => ({
             id: message.id,
@@ -46,7 +52,7 @@ export async function GET() {
 
   const { data: sessions, error } = await supabase
     .from("study_sessions")
-    .select("id,title,topic_category,last_message,created_at,updated_at,study_messages(id,role,content,created_at,sources)")
+    .select("id,title,topic_category,last_message,created_at,updated_at,course_id,status,duration_seconds,topics_covered,summary,notes,study_messages(id,role,content,created_at,sources)")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false })
     .order("created_at", { ascending: true, foreignTable: "study_messages" });
@@ -102,6 +108,7 @@ export async function POST(req: Request) {
     const normalizedFirstPrompt = firstPrompt ?? "";
     const topicCategory = typeof (body as { topicCategory?: unknown })?.topicCategory === "string" ? (body as { topicCategory?: string }).topicCategory : "General";
     const normalizedTopicCategory = topicCategory ?? "General";
+    const courseId = typeof (body as { courseId?: unknown })?.courseId === "string" ? (body as { courseId?: string }).courseId : null;
 
     const title = titleInput ? titleInput.trim() : generateStudySessionTitle(normalizedFirstPrompt);
 
@@ -112,8 +119,9 @@ export async function POST(req: Request) {
         title,
         topic_category: normalizedTopicCategory.trim() || "General",
         last_message: "",
+        course_id: courseId,
       })
-      .select("id,title,topic_category,last_message,created_at,updated_at,study_messages(id,role,content,created_at,sources)")
+      .select("id,title,topic_category,last_message,created_at,updated_at,course_id,status,duration_seconds,topics_covered,summary,notes,study_messages(id,role,content,created_at,sources)")
       .single();
 
     if (error || !session) {

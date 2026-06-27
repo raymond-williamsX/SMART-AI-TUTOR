@@ -3,6 +3,7 @@ import { Manrope, Space_Grotesk } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import "highlight.js/styles/github-dark.css";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 
 const headingFont = Space_Grotesk({
@@ -22,18 +23,18 @@ export const metadata: Metadata = {
   },
   description: "The most intuitive AI tutoring platform built for actual studying. Ask questions, upload PDFs, and build smart revision plans.",
   keywords: ["AI tutor", "EduAgent", "smart learning", "study app", "AI education", "PDF learning", "revision plans", "AI study buddy"],
-  authors: [{ name: "EduAgent Team" }],
-  creator: "EduAgent AI",
+  authors: [{ name: "Raymond Iorliam" }],
+  creator: "Raymond Iorliam",
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://eduagent.ai",
+    url: "https://eduagentai.vercel.app",
     title: "EduAgent AI | Learn smarter, not harder",
     description: "Experience the most intuitive AI tutoring platform built for actual studying. Upload your lecture materials and get instant, structured guidance.",
     siteName: "EduAgent AI",
     images: [
       {
-        url: "/dashboard-mockup.png",
+        url: "public/assets/dashboard-mockup.png",
         width: 1200,
         height: 630,
         alt: "EduAgent Dashboard Mockup",
@@ -44,11 +45,11 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "EduAgent AI | Smart Learning & AI Tutoring",
     description: "Experience the most intuitive AI tutoring platform built for actual studying.",
-    images: ["/dashboard-mockup.png"],
-    creator: "@eduagent_ai",
+    images: ["/public/assets/dashboard-mockup.png"],
+    creator: "@RaymondIorliam",
   },
   alternates: {
-    canonical: "https://eduagent.ai",
+    canonical: "https://eduagentai.vercel.app",
   },
   verification: {
     google: "B2jCJ9T6mDH8KwKS6o8N95Xaya6ucc_L95i0Elo8bnI",

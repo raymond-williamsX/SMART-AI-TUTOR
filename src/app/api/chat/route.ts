@@ -17,6 +17,12 @@ function mapStudySessionRow(session: any): StudySessionRecord {
     lastMessage: session.last_message ?? "",
     createdAt: session.created_at,
     updatedAt: session.updated_at,
+    courseId: session.course_id ?? undefined,
+    status: session.status ?? "active",
+    durationSeconds: session.duration_seconds ?? 0,
+    topicsCovered: Array.isArray(session.topics_covered) ? session.topics_covered : [],
+    summary: session.summary ?? undefined,
+    notes: session.notes ?? undefined,
     messages: Array.isArray(session.study_messages)
       ? session.study_messages.map((message: any) => ({
           id: message.id,
@@ -32,7 +38,7 @@ function mapStudySessionRow(session: any): StudySessionRecord {
 async function fetchSessionForUser(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, sessionId: string, userId: string) {
   const { data, error } = await supabase
     .from("study_sessions")
-    .select("id,title,topic_category,last_message,created_at,updated_at")
+    .select("id,title,topic_category,last_message,created_at,updated_at,course_id")
     .eq("id", sessionId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -47,7 +53,7 @@ async function fetchSessionForUser(supabase: Awaited<ReturnType<typeof createSup
 async function fetchSessionWithMessages(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, sessionId: string, userId: string) {
   const { data, error } = await supabase
     .from("study_sessions")
-    .select("id,title,topic_category,last_message,created_at,updated_at,study_messages(id,role,content,created_at,sources)")
+    .select("id,title,topic_category,last_message,created_at,updated_at,course_id,study_messages(id,role,content,created_at,sources)")
     .eq("id", sessionId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -200,7 +206,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const aiMessage = await getAIResponse(messages, session.id, user.id);
+    let documentIds: string[] = [];
+    const { data: materials } = await supabase
+      .from("uploaded_materials")
+      .select("id")
+      .or(`session_id.eq.${session.id}${session.course_id ? `,course_id.eq.${session.course_id}` : ""}`)
+      .is("deleted_at", null);
+    if (materials) {
+      documentIds = materials.map((m) => m.id);
+    }
+
+    const aiMessage = await getAIResponse(messages, session.id, user.id, documentIds);
 
     const { error: assistantMessageError } = await supabase.from("study_messages").insert({
       session_id: session.id,

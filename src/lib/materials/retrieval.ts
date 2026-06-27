@@ -62,6 +62,7 @@ export async function retrieveMaterialContext(params: {
   userId: string;
   sessionId: string;
   query: string;
+  documentIds?: string[];
 }): Promise<RagContext> {
   const queryEmbedding = await generateEmbedding(params.query, "RETRIEVAL_QUERY");
   const sessionChunks = await searchMaterialEmbeddings({
@@ -69,6 +70,7 @@ export async function retrieveMaterialContext(params: {
     sessionId: params.sessionId,
     queryEmbedding,
     limit: 5,
+    documentIds: params.documentIds,
   });
 
   let chunks = sessionChunks.filter((chunk) => chunk.score >= MIN_RELEVANCE_SCORE);
@@ -79,6 +81,7 @@ export async function retrieveMaterialContext(params: {
       userId: params.userId,
       queryEmbedding,
       limit: 5,
+      documentIds: params.documentIds,
     })).filter((chunk) => chunk.score >= MIN_RELEVANCE_SCORE);
   }
 
@@ -88,6 +91,7 @@ export async function retrieveMaterialContext(params: {
       userId: params.userId,
       queryEmbedding,
       limit: 5,
+      documentIds: params.documentIds,
     });
   }
 

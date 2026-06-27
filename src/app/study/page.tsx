@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play,
@@ -15,9 +15,16 @@ import {
   Trophy,
   Loader2,
   Plus,
+  Paperclip,
+  FileText,
+  Check,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { DashboardShell } from '@/components/layout/DashboardShell';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { UPLOADED_MATERIALS_BUCKET, buildUploadPath, isAllowedUploadMimeType, getAcceptedUploadMimeTypes } from '@/lib/uploads/constants';
+import { ChatMessage as ChatMessageComponent } from '@/components/chat/ChatMessage';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +39,14 @@ type ChatMsg = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  sources?: any[];
+};
+
+type Material = {
+  id: string;
+  file_name: string;
+  course_id: string;
+  status: string;
 };
 
 type Phase = 'setup' | 'active' | 'summary';
@@ -65,6 +80,11 @@ function formatDuration(seconds: number): string {
 
 function generateId(): string {
   return Math.random().toString(36).slice(2, 10);
+}
+
+// Helper function to dynamically merge Tailwind classes
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ');
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -241,21 +261,38 @@ function TopicTracker({
 function QuickNotes({
   value,
   onChange,
+  isSaved,
 }: {
   value: string;
   onChange: (v: string) => void;
+  isSaved: boolean;
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2 text-sm font-semibold text-white">
-        <NotebookPen size={15} className="text-cyan-400" />
-        Quick Notes
+      <div className="flex items-center justify-between text-sm font-semibold text-white">
+        <span className="flex items-center gap-2">
+          <NotebookPen size={15} className="text-cyan-400" />
+          Quick Notes
+        </span>
+        <span className="text-[10px] font-normal text-slate-500 flex items-center gap-1">
+          {isSaved ? (
+            <>
+              <Check size={10} className="text-emerald-500" />
+              Saved
+            </>
+          ) : (
+            <>
+              <Loader2 size={10} className="animate-spin text-cyan-500" />
+              Saving...
+            </>
+          )}
+        </span>
       </div>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Jot down thoughts, formulas, reminders..."
-        rows={5}
+        rows={6}
         className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-slate-300 placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none leading-relaxed"
       />
     </div>
@@ -319,7 +356,8 @@ function InlineChat({
         const assistantMsg: ChatMsg = {
           id: generateId(),
           role: 'assistant',
-          content: data.reply ?? data.message ?? 'I received your message.',
+          content: data.data?.message?.content ?? data.reply ?? data.message ?? 'I received your message.',
+          sources: data.data?.message?.sources ?? []
         };
         onNewMessage(assistantMsg);
       } else {
@@ -343,7 +381,7 @@ function InlineChat({
   return (
     <div className="flex flex-col h-full">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto flex flex-col gap-3 px-1 pb-2 min-h-0">
+      <div className="flex-1 overflow-y-auto flex flex-col gap-5 px-1 pb-4 min-h-0 scrollbar-thin">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-10">
             <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
@@ -351,33 +389,21 @@ function InlineChat({
             </div>
             <div>
               <p className="text-sm font-medium text-white">AI Study Assistant</p>
-              <p className="text-xs text-slate-500 mt-1 max-w-xs">
+              <p className="text-xs text-slate-500 mt-1 max-w-xs leading-relaxed">
                 Ask anything related to your course. I'm here to help you understand concepts, solve problems, and stay on track.
               </p>
             </div>
           </div>
         )}
-        <AnimatePresence initial={false}>
-          {messages.map((msg) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[82%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'bg-cyan-500/15 border border-cyan-500/20 text-white rounded-br-md'
-                    : 'bg-[#1a1a1a] border border-white/5 text-slate-300 rounded-bl-md'
-                }`}
-              >
-                {msg.content}
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        {messages.map((msg) => (
+          <ChatMessageComponent key={msg.id} message={{
+            id: msg.id,
+            role: msg.role,
+            content: msg.content,
+            timestamp: Date.now(),
+            sources: msg.sources ?? []
+          }} />
+        ))}
         {isSending && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -411,7 +437,7 @@ function InlineChat({
         <button
           onClick={send}
           disabled={!input.trim() || isSending}
-          className="self-end px-3 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-black rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="self-end px-3 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-black rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all h-10 flex items-center justify-center"
         >
           <Send size={16} />
         </button>
@@ -420,14 +446,18 @@ function InlineChat({
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────────
+// ─── Main Content component ───────────────────────────────────────────────────
 
-export default function StudyPage() {
+function StudyPageContent() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const querySessionId = searchParams.get('session');
+  const queryCourseId = searchParams.get('courseId');
 
   // ── Phase ─────────────────────────────────────────────────────────────────
   const [phase, setPhase] = useState<Phase>('setup');
+  const [activeTab, setActiveTab] = useState<'study' | 'notes'>('study');
 
   // ── Setup ─────────────────────────────────────────────────────────────────
   const [courses, setCourses] = useState<Course[]>([]);
@@ -435,7 +465,7 @@ export default function StudyPage() {
   const [selectedCourseId, setSelectedCourseId] = useState('');
 
   // ── Session ───────────────────────────────────────────────────────────────
-  const [sessionId] = useState(() => generateId());
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionStart, setSessionStart] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
@@ -448,9 +478,14 @@ export default function StudyPage() {
   // ── Topics & Notes ────────────────────────────────────────────────────────
   const [topics, setTopics] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
+  const [notesSaved, setNotesSaved] = useState(true);
 
   // ── Chat ──────────────────────────────────────────────────────────────────
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
+
+  // ── Materials ──────────────────────────────────────────────────────────────
+  const [allMaterials, setAllMaterials] = useState<Material[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   // ── Summary ───────────────────────────────────────────────────────────────
   const [summaryLoading, setSummaryLoading] = useState(false);
@@ -464,25 +499,103 @@ export default function StudyPage() {
     }
   }, [user, authLoading, router]);
 
-  // ─── Fetch courses ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/courses');
-        if (res.ok) {
-          const data = await res.json();
-          const list: Course[] = Array.isArray(data) ? data : data.courses ?? [];
-          setCourses(list);
-          if (list.length > 0) setSelectedCourseId(list[0].id);
+  // ─── Fetch courses & materials ─────────────────────────────────────────────
+  const loadSetupData = useCallback(async () => {
+    try {
+      const [coursesRes, materialsRes] = await Promise.all([
+        fetch('/api/courses'),
+        fetch('/api/materials')
+      ]);
+
+      if (coursesRes.ok) {
+        const data = await coursesRes.ok ? await coursesRes.json() : { courses: [] };
+        const list: Course[] = Array.isArray(data) ? data : data.courses ?? [];
+        setCourses(list);
+        
+        // Select course from query or default
+        if (list.length > 0) {
+          const match = queryCourseId && list.some(c => c.id === queryCourseId);
+          setSelectedCourseId(match ? queryCourseId : list[0].id);
         }
-      } catch {
-        // silently fail — user can still proceed if courses fail to load
-      } finally {
-        setCoursesLoading(false);
+      }
+
+      if (materialsRes.ok) {
+        const payload = await materialsRes.json();
+        setAllMaterials(payload.data?.materials ?? []);
+      }
+    } catch (err) {
+      console.error("Failed to load setup details", err);
+    } finally {
+      setCoursesLoading(false);
+    }
+  }, [queryCourseId]);
+
+  useEffect(() => {
+    if (user) {
+      loadSetupData();
+    }
+  }, [user, loadSetupData]);
+
+  // Filter materials for selected course
+  const courseMaterials = allMaterials.filter(m => m.course_id === selectedCourseId);
+
+  // ─── Restore active study session from DB ──────────────────────────────────
+  useEffect(() => {
+    if (!user || !querySessionId) return;
+
+    async function restore() {
+      try {
+        const res = await fetch(`/api/study-sessions/${querySessionId}`);
+        if (res.ok) {
+          const payload = await res.json();
+          const session = payload.data?.session;
+          if (session && session.status !== 'completed') {
+            setSessionId(session.id);
+            setSelectedCourseId(session.courseId || '');
+            setSessionStart(new Date(session.createdAt));
+            setElapsedSeconds(session.durationSeconds || 0);
+            setTopics(session.topicsCovered || []);
+            setNotes(session.notes || '');
+            setChatMessages(session.messages.map((m: any) => ({
+              id: m.id,
+              role: m.role,
+              content: m.content,
+              sources: m.sources
+            })));
+            setPhase('active');
+          }
+        }
+      } catch (e) {
+        console.error("Failed to restore session state", e);
       }
     }
-    load();
-  }, []);
+    restore();
+  }, [querySessionId, user]);
+
+  // ─── Debounced notes auto-save ─────────────────────────────────────────────
+  const [debouncedNotes, setDebouncedNotes] = useState(notes);
+
+  useEffect(() => {
+    if (phase !== 'active') return;
+    setNotesSaved(false);
+    const handler = setTimeout(() => {
+      setDebouncedNotes(notes);
+    }, 1500);
+
+    return () => clearTimeout(handler);
+  }, [notes, phase]);
+
+  useEffect(() => {
+    if (phase === 'active' && sessionId && debouncedNotes !== undefined) {
+      fetch(`/api/study-sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: debouncedNotes })
+      })
+      .then(() => setNotesSaved(true))
+      .catch(() => {});
+    }
+  }, [debouncedNotes, sessionId, phase]);
 
   // ─── Elapsed session timer ─────────────────────────────────────────────────
   useEffect(() => {
@@ -527,41 +640,90 @@ export default function StudyPage() {
 
   // ─── Actions ───────────────────────────────────────────────────────────────
 
-  const startSession = () => {
+  const startSession = async () => {
     if (!selectedCourseId) return;
-    setSessionStart(new Date());
-    setElapsedSeconds(0);
-    setTopics([]);
-    setNotes('');
-    setChatMessages([]);
-    setPomMode('work');
-    setPomSeconds(WORK_SECONDS);
-    setPomRunning(false);
-    setAiSummary(null);
-    setPhase('active');
+    
+    try {
+      const currentCourse = courses.find((c) => c.id === selectedCourseId);
+      const res = await fetch('/api/study-sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId: selectedCourseId,
+          title: `Study Session - ${currentCourse?.code || 'General'}`,
+          topicCategory: 'General'
+        })
+      });
+
+      if (res.ok) {
+        const payload = await res.json();
+        const session = payload.data?.session;
+        if (session) {
+          router.push(`/study?session=${session.id}`);
+          setSessionId(session.id);
+          setSessionStart(new Date());
+          setElapsedSeconds(0);
+          setTopics([]);
+          setNotes('');
+          setChatMessages([]);
+          setPomMode('work');
+          setPomSeconds(WORK_SECONDS);
+          setPomRunning(false);
+          setAiSummary(null);
+          setPhase('active');
+        }
+      }
+    } catch (e) {
+      console.error("Failed to start study session", e);
+    }
   };
 
   const endSession = async () => {
+    if (!sessionId) return;
     setPomRunning(false);
     const duration = elapsedSeconds;
     setTotalDuration(duration);
     setPhase('summary');
     setSummaryLoading(true);
 
-    // TODO: wire up real AI summary
-    // POST /api/study-sessions/{sessionId}/summary
-    await new Promise((resolve) => setTimeout(resolve, 2200));
-    setAiSummary(
-      `Great session! You covered ${topics.length} topic${topics.length !== 1 ? 's' : ''} over ${formatDuration(duration)}. ` +
-        `Your notes show solid engagement with the material. Keep up the focused work — ` +
-        `consistency is the key to mastery. Consider revisiting any topics that felt unclear before your next session.`
-    );
-    setSummaryLoading(false);
+    try {
+      // 1. Save final stats (duration, topics, completed status)
+      await fetch(`/api/study-sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          durationSeconds: duration,
+          topicsCovered: topics,
+          status: 'completed'
+        })
+      });
+
+      // 2. Fetch AI-generated summary
+      const summaryRes = await fetch(`/api/study-sessions/${sessionId}/summary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (summaryRes.ok) {
+        const payload = await summaryRes.json();
+        setAiSummary(payload.data?.summary ?? "Unable to compile session details.");
+      } else {
+        throw new Error("Summary generation failed.");
+      }
+    } catch (err) {
+      setAiSummary(
+        `Great session! You covered ${topics.length} topic${topics.length !== 1 ? 's' : ''} over ${formatDuration(duration)}. ` +
+        `Your notes have been saved. Review your progress and continue studying to build momentum!`
+      );
+    } finally {
+      setSummaryLoading(false);
+    }
   };
 
   const resetToSetup = () => {
     setPomRunning(false);
     setPhase('setup');
+    setSessionId(null);
     setElapsedSeconds(0);
     setTopics([]);
     setNotes('');
@@ -569,10 +731,90 @@ export default function StudyPage() {
     setAiSummary(null);
     setPomMode('work');
     setPomSeconds(WORK_SECONDS);
+    router.push('/study');
   };
 
-  const addTopic = (t: string) => setTopics((prev) => [...prev, t]);
+  const addTopic = async (t: string) => {
+    const nextTopics = [...topics, t];
+    setTopics(nextTopics);
+    // Explicitly update topics list in DB
+    if (sessionId) {
+      await fetch(`/api/study-sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topicsCovered: nextTopics })
+      });
+    }
+  };
+
   const addChatMsg = (msg: ChatMsg) => setChatMessages((prev) => [...prev, msg]);
+
+  const handleSidebarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedCourseId) return;
+
+    if (!isAllowedUploadMimeType(file.type)) {
+      alert("Invalid file type. Please upload a PDF or Word document.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      if (!supabase) throw new Error('Supabase client not initialized');
+      
+      const userRes = await supabase.auth.getUser();
+      const userId = userRes.data.user?.id;
+      if (!userId) throw new Error('User not authenticated');
+
+      const storagePath = buildUploadPath(userId, selectedCourseId, file.name);
+      
+      // Upload to bucket
+      const { error: uploadError } = await supabase.storage.from(UPLOADED_MATERIALS_BUCKET).upload(storagePath, file, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
+      if (uploadError) throw uploadError;
+
+      // Insert Row
+      const { data: insertedRow, error: insertError } = await supabase.from('uploaded_materials').insert({
+        user_id: userId,
+        course_id: selectedCourseId,
+        session_id: sessionId, // associate with active session if possible
+        file_name: file.name,
+        file_type: file.type || "application/octet-stream",
+        storage_path: storagePath,
+      }).select('id, file_name, course_id, status').single();
+
+      if (insertError) throw insertError;
+
+      // Add to local state
+      setAllMaterials((prev) => [insertedRow, ...prev]);
+
+      // Process document in background
+      fetch(`/api/materials/${insertedRow.id}/process`, { method: "POST" }).catch(() => {});
+
+    } catch (err) {
+      console.error("Document upload failed", err);
+      alert("Failed to upload document. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleViewMaterial = async (matId: string) => {
+    try {
+      const res = await fetch(`/api/materials/${matId}/view`, { method: "POST" });
+      const payload = await res.json();
+      if (payload.success && payload.data?.signedUrl) {
+        window.open(payload.data.signedUrl, "_blank", "noopener,noreferrer");
+      } else {
+        alert("Failed to retrieve document view link.");
+      }
+    } catch (e) {
+      alert("Could not open preview for this file.");
+    }
+  };
 
   const selectedCourse = courses.find((c) => c.id === selectedCourseId);
 
@@ -686,7 +928,7 @@ export default function StudyPage() {
         )}
 
         {/* ════════════════════════════ ACTIVE SESSION ══════════════════════════ */}
-        {phase === 'active' && (
+        {phase === 'active' && sessionId && (
           <motion.div
             key="active"
             initial={{ opacity: 0 }}
@@ -726,12 +968,39 @@ export default function StudyPage() {
               </div>
             </header>
 
+            {/* Mobile Tab Switcher */}
+            <div className="flex lg:hidden border-b border-white/5 bg-[#141414] shrink-0">
+              <button
+                onClick={() => setActiveTab('study')}
+                className={`flex-1 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all ${
+                  activeTab === 'study'
+                    ? 'border-cyan-500 text-cyan-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Focus & Assistant
+              </button>
+              <button
+                onClick={() => setActiveTab('notes')}
+                className={`flex-1 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all ${
+                  activeTab === 'notes'
+                    ? 'border-cyan-500 text-cyan-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Notes & Tracker
+              </button>
+            </div>
+
             {/* ── Body ── */}
             <div className="flex flex-1 overflow-hidden min-h-0">
               {/* ── Left/Main Panel ── */}
-              <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+              <div className={cn(
+                "flex-1 flex flex-col overflow-hidden min-w-0 bg-[#0a0a0a]",
+                activeTab === 'study' ? "flex" : "hidden lg:flex"
+              )}>
                 {/* Pomodoro */}
-                <div className="flex justify-center items-center py-10 px-6 border-b border-white/5 shrink-0">
+                <div className="flex justify-center items-center py-8 px-6 border-b border-white/5 shrink-0 bg-[#0c0c0c]">
                   <PomodoroCircle
                     seconds={pomSeconds}
                     totalSeconds={pomMode === 'work' ? WORK_SECONDS : BREAK_SECONDS}
@@ -769,10 +1038,64 @@ export default function StudyPage() {
               </div>
 
               {/* ── Right Sidebar ── */}
-              <aside className="w-80 shrink-0 bg-[#141414] border-l border-white/5 flex flex-col gap-6 p-5 overflow-y-auto">
+              <aside className={cn(
+                "w-full lg:w-80 shrink-0 bg-[#141414] border-l border-white/5 flex flex-col gap-6 p-5 overflow-y-auto scrollbar-thin",
+                activeTab === 'notes' ? "flex" : "hidden lg:flex"
+              )}>
                 <TopicTracker topics={topics} onAdd={addTopic} />
                 <div className="border-t border-white/5" />
-                <QuickNotes value={notes} onChange={setNotes} />
+                <QuickNotes value={notes} onChange={setNotes} isSaved={notesSaved} />
+                <div className="border-t border-white/5" />
+                
+                {/* Course Materials List */}
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between text-sm font-semibold text-white">
+                    <span className="flex items-center gap-2">
+                      <Paperclip size={15} className="text-cyan-400" />
+                      Course Materials
+                    </span>
+                    {selectedCourseId && (
+                      <label className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 cursor-pointer">
+                        <Plus size={12} />
+                        Upload
+                        <input
+                          type="file"
+                          accept={getAcceptedUploadMimeTypes()}
+                          onChange={handleSidebarUpload}
+                          className="hidden"
+                          disabled={isUploading}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  {isUploading && (
+                    <div className="flex items-center gap-2 text-xs text-cyan-400 bg-cyan-500/5 border border-cyan-500/10 rounded-xl px-3 py-2">
+                      <Loader2 size={12} className="animate-spin" />
+                      Uploading document...
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
+                    {courseMaterials.length === 0 ? (
+                      <p className="text-xs text-slate-600 italic px-1">
+                        No materials uploaded for this course.
+                      </p>
+                    ) : (
+                      courseMaterials.map((mat) => (
+                        <div
+                          key={mat.id}
+                          onClick={() => handleViewMaterial(mat.id)}
+                          className="flex items-center justify-between px-3 py-2 bg-[#0a0a0a] rounded-xl border border-white/5 hover:border-white/10 cursor-pointer group/item transition-colors"
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <FileText size={14} className="text-slate-500 group-hover/item:text-cyan-400 shrink-0" />
+                            <span className="text-xs text-slate-300 truncate leading-none">{mat.file_name}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-600 group-hover/item:text-cyan-400 shrink-0 capitalize">{mat.status}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </aside>
             </div>
           </motion.div>
@@ -786,7 +1109,7 @@ export default function StudyPage() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="h-full w-full overflow-y-auto flex items-start justify-center px-4 py-16"
+            className="h-full w-full overflow-y-auto flex items-start justify-center px-4 py-16 scrollbar-hide"
           >
             <div className="w-full max-w-2xl flex flex-col gap-6">
               {/* Header */}
@@ -890,7 +1213,7 @@ export default function StudyPage() {
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="text-sm text-slate-300 leading-relaxed"
+                      className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap"
                     >
                       {aiSummary}
                     </motion.p>
@@ -920,5 +1243,17 @@ export default function StudyPage() {
         </AnimatePresence>
       </div>
     </DashboardShell>
+  );
+}
+
+export default function StudyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <Loader2 size={28} className="text-cyan-500 animate-spin" />
+      </div>
+    }>
+      <StudyPageContent />
+    </Suspense>
   );
 }

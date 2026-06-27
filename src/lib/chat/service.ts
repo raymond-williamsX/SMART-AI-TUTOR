@@ -39,7 +39,8 @@ async function callGeminiAPI(prompt: string): Promise<string> {
 export async function getAIResponse(
   messages: ChatMessage[],
   sessionId?: string,
-  userId?: string
+  userId?: string,
+  documentIds?: string[]
 ): Promise<ChatMessage> {
   // Keep recent context compact for predictable latency and token usage.
   const recentMessages = messages.slice(-8);
@@ -58,6 +59,7 @@ export async function getAIResponse(
           userId,
           sessionId,
           query: lastUserMessage.content,
+          documentIds,
         });
         if (ragResult.chunks.length > 0) {
           contextText = "\n\n=== RELEVANT CONTEXT FROM UPLOADED DOCUMENTS ===\n" + formatRagContext(ragResult.chunks);

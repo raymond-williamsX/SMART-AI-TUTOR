@@ -18,4 +18,10 @@ export type StudySessionRecord = {
   createdAt: string;
   updatedAt: string;
   messages: StudySessionMessage[];
+  courseId?: string;
+  status?: "active" | "paused" | "completed";
+  durationSeconds?: number;
+  topicsCovered?: string[];
+  summary?: string;
+  notes?: string;
 };
