@@ -481,8 +481,9 @@ function QuizPageContent() {
 
       if (res.ok) {
         const data = await res.json();
-        if (data.questions && data.questions.length > 0) {
-          const qs: Question[] = data.questions.map((q: any, i: number) => ({
+        const questionsList = data.data?.questions ?? data.questions;
+        if (questionsList && questionsList.length > 0) {
+          const qs: Question[] = questionsList.map((q: any, i: number) => ({
             id: q.id || `q-${i}-${Date.now()}`,
             question: q.question,
             options: q.options,

@@ -108,10 +108,10 @@ function PomodoroCircle({
   const dashOffset = CIRCLE_CIRCUMFERENCE * (1 - progress);
 
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div className="flex flex-col items-center gap-3 md:gap-6">
       {/* Mode Label */}
       <div
-        className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest ${
+        className={`px-4 py-1.5 rounded-full text-[10px] md:text-xs font-semibold uppercase tracking-widest ${
           mode === 'work'
             ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
             : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
@@ -121,12 +121,10 @@ function PomodoroCircle({
       </div>
 
       {/* SVG Timer Circle */}
-      <div className="relative flex items-center justify-center">
+      <div className="relative flex items-center justify-center w-36 h-36 md:w-[220px] md:h-[220px]">
         <svg
-          width="220"
-          height="220"
           viewBox="0 0 220 220"
-          className="-rotate-90"
+          className="-rotate-90 w-full h-full"
         >
           {/* Track */}
           <circle
@@ -153,34 +151,34 @@ function PomodoroCircle({
         </svg>
 
         {/* Time Text */}
-        <div className="absolute flex flex-col items-center gap-1">
-          <span className="text-5xl font-mono font-bold text-white tracking-tight tabular-nums">
+        <div className="absolute flex flex-col items-center gap-0.5 md:gap-1">
+          <span className="text-3xl md:text-5xl font-mono font-bold text-white tracking-tight tabular-nums">
             {formatTime(seconds)}
           </span>
-          <span className="text-xs text-slate-500 uppercase tracking-widest">
+          <span className="text-[9px] md:text-xs text-slate-500 uppercase tracking-widest">
             remaining
           </span>
         </div>
       </div>
 
       {/* Controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <button
           onClick={onStop}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-slate-400 hover:bg-[#202020] hover:text-white transition-all text-sm"
+          className="flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-xl border border-white/10 text-slate-400 hover:bg-[#202020] hover:text-white transition-all text-xs md:text-sm"
         >
-          <Square size={15} />
+          <Square size={13} />
           Reset
         </button>
         <button
           onClick={onPlayPause}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+          className={`flex items-center gap-1.5 px-4 md:px-6 py-2 md:py-2.5 rounded-xl font-semibold text-xs md:text-sm transition-all ${
             mode === 'work'
               ? 'bg-cyan-500 hover:bg-cyan-400 text-black'
               : 'bg-emerald-500 hover:bg-emerald-400 text-black'
           }`}
         >
-          {isRunning ? <Pause size={16} /> : <Play size={16} />}
+          {isRunning ? <Pause size={13} /> : <Play size={13} />}
           {isRunning ? 'Pause' : 'Start'}
         </button>
       </div>
@@ -379,7 +377,7 @@ function InlineChat({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0 w-full overflow-hidden">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto flex flex-col gap-5 px-1 pb-4 min-h-0 scrollbar-thin">
         {messages.length === 0 && (
@@ -420,7 +418,7 @@ function InlineChat({
       </div>
 
       {/* Input */}
-      <div className="flex gap-2 pt-3 border-t border-white/5 mt-2">
+      <div className="flex gap-2 pt-3 border-t border-white/5 mt-2 shrink-0">
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -437,7 +435,7 @@ function InlineChat({
         <button
           onClick={send}
           disabled={!input.trim() || isSending}
-          className="self-end px-3 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-black rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all h-10 flex items-center justify-center"
+          className="self-end px-3 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-black rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all h-10 flex items-center justify-center shrink-0"
         >
           <Send size={16} />
         </button>
