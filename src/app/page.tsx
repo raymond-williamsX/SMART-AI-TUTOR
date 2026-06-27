@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowRight, BookOpen, Brain, CheckCircle2, FileText, Mic, ShieldCheck, UploadCloud } from "lucide-react";
+import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -89,7 +90,9 @@ function DemoChat({ onTriggerSignup }: { onTriggerSignup: () => void }) {
           </p>
         )}
         {messages.map((msg, index) => (
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             key={index}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
@@ -102,7 +105,7 @@ function DemoChat({ onTriggerSignup }: { onTriggerSignup: () => void }) {
             >
               {msg.content}
             </div>
-          </div>
+          </motion.div>
         ))}
 
         {loading && (
@@ -154,7 +157,11 @@ function DemoChat({ onTriggerSignup }: { onTriggerSignup: () => void }) {
 
       {/* CTA Conversion Box */}
       {showCTA && (
-        <div className="mt-8 border border-cyan-500/25 bg-cyan-500/10 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mt-8 border border-cyan-500/25 bg-cyan-500/10 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4"
+        >
           <div className="text-left">
             <p className="text-sm font-semibold text-white">Unlock full tutoring powers!</p>
             <p className="text-xs text-cyan-200 mt-1">
@@ -167,7 +174,7 @@ function DemoChat({ onTriggerSignup }: { onTriggerSignup: () => void }) {
           >
             Create free account <ArrowRight className="h-3.5 w-3.5" />
           </button>
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -184,9 +191,34 @@ function HomePageContent() {
   }, [searchParams]);
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-slate-200 selection:bg-cyan-500/30 font-body">
+    <main className="min-h-screen bg-[#0a0a0a] text-slate-200 selection:bg-cyan-500/30 font-body overflow-hidden">
+      {/* Structured Data JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "EduAgent AI",
+            "applicationCategory": "EducationalApplication",
+            "operatingSystem": "Web",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "Experience the most intuitive AI tutoring platform built for actual studying. Ask questions, upload PDFs, and build smart revision plans.",
+          }),
+        }}
+      />
+      
       {/* Floating Navigation */}
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-7xl z-50 rounded-2xl border border-white/10 bg-[#0a0a0a]/50 backdrop-blur-xl mix-blend-plus-lighter shadow-2xl">
+      <motion.nav 
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="fixed top-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-7xl z-50 rounded-2xl border border-white/10 bg-[#0a0a0a]/50 backdrop-blur-xl mix-blend-plus-lighter shadow-2xl"
+      >
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500 text-black">
@@ -207,88 +239,142 @@ function HomePageContent() {
             </div>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* Hero Section */}
       <section className="relative mx-auto max-w-7xl px-6 pt-48 pb-20 text-center">
-        <h1 className="font-heading text-6xl sm:text-7xl lg:text-8xl font-medium tracking-tight text-white mb-8 text-balance">
-          Learn <span className="text-cyan-400">smarter</span>, not harder.
-        </h1>
-        <p className="mx-auto max-w-3xl text-xl sm:text-2xl text-slate-400 mb-12 text-balance leading-relaxed">
-          Ask questions, upload study material, build smart revision plans, and keep every learning session organized in one workspace. No fluff, just results.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-24">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <h1 className="font-heading text-6xl sm:text-7xl lg:text-8xl font-medium tracking-tight text-white mb-8 text-balance">
+            Learn <span className="text-cyan-400">smarter</span>, not harder.
+          </h1>
+          <p className="mx-auto max-w-3xl text-xl sm:text-2xl text-slate-400 mb-12 text-balance leading-relaxed">
+            Ask questions, upload study material, build smart revision plans, and keep every learning session organized in one workspace. No fluff, just results.
+          </p>
+        </motion.div>
+        
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-24"
+        >
           <Button onClick={() => setActiveModal("signup")} className="bg-white text-black hover:bg-slate-200 rounded-full px-10 h-14 text-lg font-medium w-full sm:w-auto">
             Start studying <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
           <Button variant="outline" className="border-white/10 bg-[#141414] hover:bg-[#1f1f1f] text-white rounded-full px-10 h-14 text-lg font-medium w-full sm:w-auto transition-colors">
             Read docs
           </Button>
-        </div>
+        </motion.div>
         
-        <DemoChat onTriggerSignup={() => setActiveModal("signup")} />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+        >
+          <DemoChat onTriggerSignup={() => setActiveModal("signup")} />
+        </motion.div>
         
         {/* Dashboard Image Mockup */}
-        <div className="relative mx-auto max-w-5xl rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.8)]">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
+          className="relative mx-auto max-w-5xl rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.8)]"
+        >
            <Image
              src="/dashboard-mockup.png"
-             alt="EduAgent Dashboard"
+             alt="EduAgent AI Tutoring Dashboard Mockup"
              width={2048}
              height={1366}
              className="w-full h-auto object-cover"
              priority
            />
-        </div>
+        </motion.div>
       </section>
 
       {/* Core Principles */}
-      <section id="how-it-works" className="border-t border-white/5 bg-[#0a0a0a] py-32">
+      <section id="how-it-works" className="border-t border-white/5 bg-[#0a0a0a] py-32 overflow-hidden">
         <div className="mx-auto max-w-7xl px-6 grid lg:grid-cols-2 gap-20 items-center">
-          <div>
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
             <h2 className="font-heading text-5xl sm:text-6xl font-medium text-white leading-tight mb-8">
               Study sessions should be intuitive, fast, and structured.
             </h2>
             <p className="text-2xl text-slate-400 leading-relaxed pl-8 border-l-2 border-cyan-500/30">
               EduAgent gives you scalable learning without the friction. Just upload and start conversing.
             </p>
-          </div>
+          </motion.div>
           
           <div className="grid gap-8">
-            <div className="bg-[#141414] border border-white/5 rounded-3xl p-10 hover:border-cyan-500/30 transition-colors">
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+              className="bg-[#141414] border border-white/5 rounded-3xl p-10 hover:border-cyan-500/30 transition-colors"
+            >
               <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
                 <UploadCloud className="h-7 w-7" />
               </div>
               <h3 className="text-3xl font-medium text-white mb-4">Document learning</h3>
               <p className="text-slate-400 text-xl leading-relaxed">Stable, fast parsing for your lecture slides and PDF notes.</p>
-            </div>
+            </motion.div>
             
-            <div className="bg-[#141414] border border-white/5 rounded-3xl p-10 hover:border-cyan-500/30 transition-colors">
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+              className="bg-[#141414] border border-white/5 rounded-3xl p-10 hover:border-cyan-500/30 transition-colors"
+            >
               <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
                 <CheckCircle2 className="h-7 w-7" />
               </div>
               <h3 className="text-3xl font-medium text-white mb-4">Structured guidance</h3>
               <p className="text-slate-400 text-xl leading-relaxed">Clear answers, quizzes, and follow-ups. No rambling AI.</p>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Features Grid */}
-      <section id="features" className="mx-auto max-w-7xl px-6 py-32 border-t border-white/5">
-        <div className="mb-20 text-center sm:text-left">
+      <section id="features" className="mx-auto max-w-7xl px-6 py-32 border-t border-white/5 overflow-hidden">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8 }}
+          className="mb-20 text-center sm:text-left"
+        >
           <h2 className="font-heading text-4xl sm:text-5xl font-medium text-white">Everything a premium tutor should feel like.</h2>
-        </div>
+        </motion.div>
         <div className="grid gap-10 md:grid-cols-2 xl:grid-cols-3">
-          {features.map((feature) => {
+          {features.map((feature, i) => {
             const Icon = feature.icon;
             return (
-              <div key={feature.title} className="bg-transparent group p-2">
+              <motion.div 
+                key={feature.title} 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                whileHover={{ y: -5 }}
+                className="bg-transparent group p-4 rounded-3xl border border-transparent hover:border-white/5 hover:bg-[#141414]/50 transition-all cursor-default"
+              >
                 <div className="mb-6 text-cyan-400 opacity-80 group-hover:opacity-100 transition-opacity">
                   <Icon className="h-8 w-8" />
                 </div>
                 <h3 className="text-2xl font-medium text-white mb-3">{feature.title}</h3>
                 <p className="text-slate-400 text-lg leading-relaxed">{feature.description}</p>
-              </div>
+              </motion.div>
             );
           })}
         </div>
@@ -296,7 +382,13 @@ function HomePageContent() {
 
       {/* WhatsApp CTA Section */}
       <section className="mx-auto max-w-4xl px-6 pb-24 text-center">
-        <div className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-emerald-950/10 backdrop-blur-md p-8 sm:p-10 shadow-[0_0_50px_rgba(16,185,129,0.03)]">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6 }}
+          className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-emerald-950/10 backdrop-blur-md p-8 sm:p-10 shadow-[0_0_50px_rgba(16,185,129,0.03)]"
+        >
           <div className="absolute top-0 right-0 h-40 w-40 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
           <div className="absolute bottom-0 left-0 h-40 w-40 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
           
@@ -323,7 +415,7 @@ function HomePageContent() {
               Start WhatsApp Chat
             </Link>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* CTA & Footer Section */}
@@ -335,7 +427,12 @@ function HomePageContent() {
           <div className="absolute top-1/2 -translate-y-1/2 right-1/2 w-[300px] md:w-[1000px] h-[70px] md:h-[140px] bg-gradient-to-l from-cyan-500/10 via-cyan-500/5 to-transparent blur-[60px] [clip-path:polygon(100%_50%,0_0,0_100%)] pointer-events-none z-0"></div>
           <div className="absolute top-1/2 -translate-y-1/2 left-1/2 w-[300px] md:w-[1000px] h-[70px] md:h-[140px] bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent blur-[60px] [clip-path:polygon(0_50%,100%_0,100%_100%)] pointer-events-none z-0"></div>
           
-          <div className="flex gap-3 justify-center relative items-center z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex gap-3 justify-center relative items-center z-10"
+          >
             <button 
               onClick={() => setActiveModal("signup")} 
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors text-slate-950 py-2 rounded-full h-12 px-8 text-[15px] bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.3)]"
@@ -345,7 +442,7 @@ function HomePageContent() {
             <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors text-slate-950 rounded-full w-12 h-12 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
               <ArrowRight className="w-5 h-5" />
             </button>
-          </div>
+          </motion.div>
           <div className="w-[2000px] md:w-[4000px] h-[800px] absolute -bottom-[720px] left-1/2 -translate-x-1/2 rounded-[100%] pointer-events-none bg-gradient-to-t from-[#0a0a0a] via-[#141414] to-cyan-500/10"></div>
         </div>
 
