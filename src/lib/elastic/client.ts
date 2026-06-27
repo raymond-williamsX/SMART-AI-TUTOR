@@ -100,16 +100,61 @@ function mockElasticRequest(path: string, init: RequestInit = {}): any {
       const docs = mockIndices[index] || {};
       let hits = Object.values(docs);
 
+      const queryFilters: any[] = [];
+      const bodyFilter = body?.query?.bool?.filter;
+      if (Array.isArray(bodyFilter)) {
+        queryFilters.push(...bodyFilter);
+      }
+
       const knn = body?.knn;
       if (knn) {
-        const filters = knn.filter || [];
-        for (const filter of filters) {
-          if (filter.term) {
-            const [key, val] = Object.entries(filter.term)[0];
-            hits = hits.filter((h: any) => h[key] === val);
-          }
+        if (Array.isArray(knn.filter)) {
+          queryFilters.push(...knn.filter);
+        } else if (knn.filter) {
+          queryFilters.push(knn.filter);
         }
+      }
 
+      for (const filter of queryFilters) {
+        if (filter.term) {
+          const [key, val] = Object.entries(filter.term)[0];
+          const cleanKey = key.replace(".keyword", "");
+          hits = hits.filter((h: any) => {
+            const propVal = h[cleanKey] ?? h[cleanKey.replace(/_([a-z])/g, (g) => g[1].toUpperCase())] ?? h[cleanKey.replace(/([A-Z])/g, "_$1").toLowerCase()];
+            return propVal === val;
+          });
+        } else if (filter.terms) {
+          const [key, val] = Object.entries(filter.terms)[0];
+          const cleanKey = key.replace(".keyword", "");
+          if (Array.isArray(val)) {
+            hits = hits.filter((h: any) => {
+              const propVal = h[cleanKey] ?? h[cleanKey.replace(/_([a-z])/g, (g) => g[1].toUpperCase())] ?? h[cleanKey.replace(/([A-Z])/g, "_$1").toLowerCase()];
+              return val.includes(propVal);
+            });
+          }
+        } else if (filter.bool?.should) {
+          const shoulds = filter.bool.should;
+          hits = hits.filter((h: any) => {
+            return shoulds.some((s: any) => {
+              if (s.term) {
+                const [key, val] = Object.entries(s.term)[0];
+                const cleanKey = key.replace(".keyword", "");
+                const propVal = h[cleanKey] ?? h[cleanKey.replace(/_([a-z])/g, (g) => g[1].toUpperCase())] ?? h[cleanKey.replace(/([A-Z])/g, "_$1").toLowerCase()];
+                return propVal === val;
+              }
+              if (s.match) {
+                const [key, val] = Object.entries(s.match)[0];
+                const cleanKey = key.replace(".keyword", "");
+                const propVal = h[cleanKey] ?? h[cleanKey.replace(/_([a-z])/g, (g) => g[1].toUpperCase())] ?? h[cleanKey.replace(/([A-Z])/g, "_$1").toLowerCase()];
+                return propVal === val;
+              }
+              return false;
+            });
+          });
+        }
+      }
+
+      if (knn) {
         const queryVector = knn.query_vector;
         const scoredHits = hits.map((doc: any) => {
           const score = queryVector && doc.embedding ? cosineSimilarity(queryVector, doc.embedding) : 1.0;
@@ -319,14 +364,21 @@ export async function searchSimilarChunks(index: string, sessionId: string, embe
       k: limit,
       num_candidates: 50,
       filter: {
-        term: {
-          "sessionId.keyword": sessionId
+        bool: {
+          should: [
+            { term: { session_id: sessionId } },
+            { term: { "session_id.keyword": sessionId } },
+            { match: { session_id: sessionId } },
+            { term: { sessionId: sessionId } },
+            { term: { "sessionId.keyword": sessionId } }
+          ],
+          minimum_should_match: 1
         }
       }
     },
-    _source: ["text"]
+    _source: ["chunk_text", "text"]
   };
 
   const res = await searchIndex(index, query);
-  return res.hits?.hits?.map((hit: any) => hit._source.text) || [];
+  return res.hits?.hits?.map((hit: any) => hit._source.chunk_text ?? hit._source.text).filter(Boolean) || [];
 }

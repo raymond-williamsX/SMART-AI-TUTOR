@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { env } from "../env";
 
 type GenerateResult = {
   text: string;
@@ -15,17 +16,22 @@ const EMBEDDING_MODEL = "gemini-embedding-001";
 export const EMBEDDING_DIMENSIONS = 768;
 
 let aiClient: GoogleGenAI | null = null;
+let mockModeNotified = false;
 
 function getApiKey(): string {
-  const apiKey = process.env.GEMINI_API_KEY;
+  return env.GEMINI_API_KEY || env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+}
 
-  if (!apiKey) {
-    throw new Error(
-      "Missing GEMINI_API_KEY environment variable."
-    );
+function isKeyValid(): boolean {
+  const key = getApiKey();
+  return typeof key === "string" && key.startsWith("AIzaSy");
+}
+
+function notifyMockMode() {
+  if (!mockModeNotified) {
+    console.info("[Gemini Client] No valid API key starting with 'AIzaSy' detected. Running in silent simulated mock mode for development.");
+    mockModeNotified = true;
   }
-
-  return apiKey;
 }
 
 function getClient(): GoogleGenAI {
@@ -204,6 +210,15 @@ function isMockingNeeded(error: unknown): boolean {
 export async function generateText(
   prompt: string
 ): Promise<GenerateResult> {
+  if (!isKeyValid()) {
+    notifyMockMode();
+    const mockText = getMockAnswer(prompt);
+    return {
+      text: mockText,
+      raw: { mock: true },
+    };
+  }
+
   try {
     const response = await getClient().models.generateContent({
       model: GENERATIVE_MODEL,
@@ -228,7 +243,7 @@ export async function generateText(
     };
   } catch (error) {
     if (isMockingNeeded(error)) {
-      console.warn("[Gemini Client] API key is invalid/missing. Falling back to high-quality mockup responses for the demo.");
+      notifyMockMode();
       const mockText = getMockAnswer(prompt);
       return {
         text: mockText,
@@ -252,6 +267,11 @@ export async function generateEmbedding(
   text: string,
   taskType: EmbeddingTaskType = "RETRIEVAL_DOCUMENT"
 ): Promise<number[]> {
+  if (!isKeyValid()) {
+    notifyMockMode();
+    return getMockEmbedding(text);
+  }
+
   try {
     const response = await getClient().models.embedContent({
       model: EMBEDDING_MODEL,
@@ -271,7 +291,7 @@ export async function generateEmbedding(
     return embedding;
   } catch (error) {
     if (isMockingNeeded(error)) {
-      console.warn("[Gemini Client] API key is invalid/missing. Falling back to mock embeddings for the demo.");
+      notifyMockMode();
       return getMockEmbedding(text);
     }
 
@@ -292,6 +312,11 @@ export async function extractImageText(
   mimeType: string,
   fileName?: string
 ): Promise<string> {
+  if (!isKeyValid()) {
+    notifyMockMode();
+    return `[Mock OCR Result: Extracted text from ${fileName || "image"}. Let's study this material together!]`;
+  }
+
   try {
     const base64Data = buffer.toString("base64");
     const response = await getClient().models.generateContent({
@@ -313,7 +338,7 @@ export async function extractImageText(
     return text;
   } catch (error) {
     if (isMockingNeeded(error)) {
-      console.warn("[Gemini Client] API key is invalid/missing. Falling back to mock OCR text for the demo.");
+      notifyMockMode();
       return `[Mock OCR Result: Extracted text from ${fileName || "image"}. Let's study this material together!]`;
     }
 

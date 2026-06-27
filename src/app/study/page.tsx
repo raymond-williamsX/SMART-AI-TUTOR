@@ -994,11 +994,11 @@ function StudyPageContent() {
             <div className="flex flex-1 overflow-hidden min-h-0">
               {/* ── Left/Main Panel ── */}
               <div className={cn(
-                "flex-1 flex flex-col overflow-hidden min-w-0 bg-[#0a0a0a]",
+                "flex-1 flex flex-col md:flex-row overflow-hidden min-w-0 bg-[#0a0a0a]",
                 activeTab === 'study' ? "flex" : "hidden lg:flex"
               )}>
                 {/* Pomodoro */}
-                <div className="flex justify-center items-center py-8 px-6 border-b border-white/5 shrink-0 bg-[#0c0c0c]">
+                <div className="flex justify-center items-center py-4 md:py-8 px-4 md:px-6 border-b md:border-b-0 md:border-r border-white/5 shrink-0 bg-[#0c0c0c] w-full md:w-80">
                   <PomodoroCircle
                     seconds={pomSeconds}
                     totalSeconds={pomMode === 'work' ? WORK_SECONDS : BREAK_SECONDS}
@@ -1014,7 +1014,7 @@ function StudyPageContent() {
                 </div>
 
                 {/* Inline Chat */}
-                <div className="flex-1 flex flex-col overflow-hidden px-6 pt-5 pb-4 min-h-0">
+                <div className="flex-1 flex flex-col overflow-hidden px-4 md:px-6 pt-5 pb-4 min-h-0">
                   <div className="flex items-center gap-2 text-sm font-semibold text-white mb-4 shrink-0">
                     <BookOpen size={15} className="text-cyan-400" />
                     AI Study Assistant

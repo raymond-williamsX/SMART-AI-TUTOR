@@ -110,8 +110,26 @@ export async function POST(request: NextRequest) {
             query: {
               bool: {
                 filter: [
-                  { term: { document_id: materialId } },
-                  { term: { user_id: userData.user.id } }
+                  {
+                    bool: {
+                      should: [
+                        { term: { document_id: materialId } },
+                        { term: { "document_id.keyword": materialId } },
+                        { match: { document_id: materialId } }
+                      ],
+                      minimum_should_match: 1
+                    }
+                  },
+                  {
+                    bool: {
+                      should: [
+                        { term: { user_id: userData.user.id } },
+                        { term: { "user_id.keyword": userData.user.id } },
+                        { match: { user_id: userData.user.id } }
+                      ],
+                      minimum_should_match: 1
+                    }
+                  }
                 ]
               }
             },
