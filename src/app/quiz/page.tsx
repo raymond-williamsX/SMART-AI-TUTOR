@@ -377,6 +377,7 @@ function QuizPageContent() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerRecord[]>([]);
   const [currentAnswered, setCurrentAnswered] = useState(false);
+  const [currentAnswer, setCurrentAnswer] = useState<{ correct: boolean; selection: string } | null>(null);
   const [generating, setGenerating] = useState(false);
   const [setupError, setSetupError] = useState<string | null>(null);
 
@@ -508,6 +509,7 @@ function QuizPageContent() {
     setCurrentIndex(0);
     setAnswers([]);
     setCurrentAnswered(false);
+    setCurrentAnswer(null);
     setPhase('quiz');
   };
 
@@ -516,13 +518,22 @@ function QuizPageContent() {
     if (currentAnswered) return;
     setLastUserAnswerVal(selection);
     setCurrentAnswered(true);
-    setAnswers((prev) => [
-      ...prev,
-      { questionId: questions[currentIndex].id, correct, question: questions[currentIndex] },
-    ]);
+    setCurrentAnswer({ correct, selection });
   };
 
   const handleNext = async () => {
+    if (!currentAnswer) return;
+
+    const newAnswerRecord = {
+      questionId: questions[currentIndex].id,
+      correct: currentAnswer.correct,
+      question: questions[currentIndex],
+    };
+
+    const updatedAnswers = [...answers, newAnswerRecord];
+    setAnswers(updatedAnswers);
+    setCurrentAnswer(null);
+
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((i) => i + 1);
       setCurrentAnswered(false);
@@ -530,8 +541,8 @@ function QuizPageContent() {
       setPhase('results');
       // Save quiz results to PostgreSQL database
       try {
-        const correctCount = answers.filter((a) => a.correct).length;
-        const accuracy = Math.round((correctCount / questions.length) * 100);
+        const scoreCount = updatedAnswers.filter((a) => a.correct).length;
+        const accuracyPct = Math.round((scoreCount / questions.length) * 100);
 
         const currentCourse = courses.find((c) => c.id === selectedCourseId);
         const title = `Quiz — ${currentCourse ? currentCourse.code : 'General Knowledge'} (${new Date().toLocaleDateString()})`;
@@ -543,9 +554,9 @@ function QuizPageContent() {
             courseId: selectedCourseId || null,
             materialId: selectedMaterialId || null,
             title,
-            score: accuracy,
+            score: accuracyPct,
             totalQuestions: questions.length,
-            questions: answers.map((a, idx) => ({
+            questions: updatedAnswers.map((a, idx) => ({
               questionText: a.question.question,
               options: a.question.options || [],
               correctAnswer: a.question.correct_answer,
@@ -578,6 +589,7 @@ function QuizPageContent() {
     setAnswers([]);
     setCurrentIndex(0);
     setCurrentAnswered(false);
+    setCurrentAnswer(null);
   };
 
   // ─── Review Past Quiz ──────────────────────────────────────────────────────
