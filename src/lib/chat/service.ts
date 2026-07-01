@@ -14,10 +14,10 @@ const SYSTEM_PROMPT = `You are EduAgent AI, a professional AI tutor. When respon
 
 Respond in a supportive, encouraging tone suitable for learners.`;
 
-async function callGeminiAPI(prompt: string): Promise<string> {
+async function callGeminiAPI(prompt: string, userId?: string): Promise<string> {
   try {
     const promptWithSystem = `${SYSTEM_PROMPT}\n\n${prompt}`;
-    const result = await generateText(promptWithSystem);
+    const result = await generateText(promptWithSystem, { userId, requestType: "chat" });
     const text = (result?.text ?? "").toString().trim();
 
     if (!text) {
@@ -73,7 +73,7 @@ export async function getAIResponse(
 
   const prompt = `Conversation transcript:\n${transcript}${contextText}`;
 
-  const aiText = await callGeminiAPI(prompt);
+  const aiText = await callGeminiAPI(prompt, userId);
 
   return {
     id: `ai-${Date.now()}`,

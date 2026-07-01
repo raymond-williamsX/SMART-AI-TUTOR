@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { env } from "../env";
+import { logAiRequest } from "@/lib/analytics/tracker";
 
 type GenerateResult = {
   text: string;
@@ -208,11 +209,22 @@ function isMockingNeeded(error: unknown): boolean {
 }
 
 export async function generateText(
-  prompt: string
+  prompt: string,
+  options?: { userId?: string; requestType?: string }
 ): Promise<GenerateResult> {
   if (!isKeyValid()) {
     notifyMockMode();
     const mockText = getMockAnswer(prompt);
+    const mockPromptTokens = Math.ceil(prompt.length / 4);
+    const mockCompletionTokens = Math.ceil(mockText.length / 4);
+    void logAiRequest(
+      options?.userId,
+      mockPromptTokens,
+      mockCompletionTokens,
+      GENERATIVE_MODEL,
+      options?.requestType || "chat",
+      "success"
+    );
     return {
       text: mockText,
       raw: { mock: true },
@@ -237,6 +249,18 @@ export async function generateText(
       );
     }
 
+    const promptTokens = response.usageMetadata?.promptTokenCount || Math.ceil(prompt.length / 4);
+    const completionTokens = response.usageMetadata?.candidatesTokenCount || Math.ceil(text.length / 4);
+
+    void logAiRequest(
+      options?.userId,
+      promptTokens,
+      completionTokens,
+      GENERATIVE_MODEL,
+      options?.requestType || "chat",
+      "success"
+    );
+
     return {
       text,
       raw: response,
@@ -245,6 +269,16 @@ export async function generateText(
     if (isMockingNeeded(error)) {
       notifyMockMode();
       const mockText = getMockAnswer(prompt);
+      const mockPromptTokens = Math.ceil(prompt.length / 4);
+      const mockCompletionTokens = Math.ceil(mockText.length / 4);
+      void logAiRequest(
+        options?.userId,
+        mockPromptTokens,
+        mockCompletionTokens,
+        GENERATIVE_MODEL,
+        options?.requestType || "chat",
+        "success"
+      );
       return {
         text: mockText,
         raw: { mock: true },
@@ -259,17 +293,37 @@ export async function generateText(
       stack: error instanceof Error ? error.stack : undefined,
     });
 
+    void logAiRequest(
+      options?.userId,
+      Math.ceil(prompt.length / 4),
+      0,
+      GENERATIVE_MODEL,
+      options?.requestType || "chat",
+      "failed",
+      errorMessage
+    );
+
     throw new Error(`Gemini API error: ${errorMessage}`);
   }
 }
 
 export async function generateEmbedding(
   text: string,
-  taskType: EmbeddingTaskType = "RETRIEVAL_DOCUMENT"
+  taskType: EmbeddingTaskType = "RETRIEVAL_DOCUMENT",
+  options?: { userId?: string }
 ): Promise<number[]> {
   if (!isKeyValid()) {
     notifyMockMode();
-    return getMockEmbedding(text);
+    const mockEmb = getMockEmbedding(text);
+    void logAiRequest(
+      options?.userId,
+      Math.ceil(text.length / 4),
+      0,
+      EMBEDDING_MODEL,
+      "embedding",
+      "success"
+    );
+    return mockEmb;
   }
 
   try {
@@ -288,11 +342,30 @@ export async function generateEmbedding(
       throw new Error("Empty embedding returned by Gemini.");
     }
 
+    const promptTokens = Math.ceil(text.length / 4);
+    void logAiRequest(
+      options?.userId,
+      promptTokens,
+      0,
+      EMBEDDING_MODEL,
+      "embedding",
+      "success"
+    );
+
     return embedding;
   } catch (error) {
     if (isMockingNeeded(error)) {
       notifyMockMode();
-      return getMockEmbedding(text);
+      const mockEmb = getMockEmbedding(text);
+      void logAiRequest(
+        options?.userId,
+        Math.ceil(text.length / 4),
+        0,
+        EMBEDDING_MODEL,
+        "embedding",
+        "success"
+      );
+      return mockEmb;
     }
 
     const errorMessage =
@@ -303,6 +376,16 @@ export async function generateEmbedding(
       stack: error instanceof Error ? error.stack : undefined,
     });
 
+    void logAiRequest(
+      options?.userId,
+      Math.ceil(text.length / 4),
+      0,
+      EMBEDDING_MODEL,
+      "embedding",
+      "failed",
+      errorMessage
+    );
+
     throw new Error(`Gemini Embedding error: ${errorMessage}`);
   }
 }
@@ -310,11 +393,21 @@ export async function generateEmbedding(
 export async function extractImageText(
   buffer: Buffer,
   mimeType: string,
-  fileName?: string
+  fileName?: string,
+  options?: { userId?: string }
 ): Promise<string> {
   if (!isKeyValid()) {
     notifyMockMode();
-    return `[Mock OCR Result: Extracted text from ${fileName || "image"}. Let's study this material together!]`;
+    const mockText = `[Mock OCR Result: Extracted text from ${fileName || "image"}. Let's study this material together!]`;
+    void logAiRequest(
+      options?.userId,
+      100,
+      Math.ceil(mockText.length / 4),
+      GENERATIVE_MODEL,
+      "ocr",
+      "success"
+    );
+    return mockText;
   }
 
   try {
@@ -335,11 +428,32 @@ export async function extractImageText(
     });
 
     const text = response.text || "";
+    const promptTokens = response.usageMetadata?.promptTokenCount || 200;
+    const completionTokens = response.usageMetadata?.candidatesTokenCount || Math.ceil(text.length / 4);
+
+    void logAiRequest(
+      options?.userId,
+      promptTokens,
+      completionTokens,
+      GENERATIVE_MODEL,
+      "ocr",
+      "success"
+    );
+
     return text;
   } catch (error) {
     if (isMockingNeeded(error)) {
       notifyMockMode();
-      return `[Mock OCR Result: Extracted text from ${fileName || "image"}. Let's study this material together!]`;
+      const mockText = `[Mock OCR Result: Extracted text from ${fileName || "image"}. Let's study this material together!]`;
+      void logAiRequest(
+        options?.userId,
+        100,
+        Math.ceil(mockText.length / 4),
+        GENERATIVE_MODEL,
+        "ocr",
+        "success"
+      );
+      return mockText;
     }
 
     const errorMessage =
@@ -349,6 +463,16 @@ export async function extractImageText(
       message: errorMessage,
       stack: error instanceof Error ? error.stack : undefined,
     });
+
+    void logAiRequest(
+      options?.userId,
+      200,
+      0,
+      GENERATIVE_MODEL,
+      "ocr",
+      "failed",
+      errorMessage
+    );
 
     throw new Error(`Gemini Image Extraction error: ${errorMessage}`);
   }
