@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Bell, HelpCircle, MessageSquare, Save, Settings, ShieldAlert, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -87,6 +88,46 @@ export function MockSection({ title, type }: { title: string; type: "feedback" |
     );
   }
 
+  const [flags, setFlags] = useState<Array<{ key: string; enabled: boolean; description: string }>>([]);
+  const [flagsLoading, setFlagsLoading] = useState(true);
+
+  useEffect(() => {
+    if (type !== "settings") return;
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/feature-flags");
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          setFlags(json.data);
+        }
+      } catch (err) {
+        console.warn("[settings:flags] Failed to fetch flags:", err);
+      } finally {
+        setFlagsLoading(false);
+      }
+    })();
+  }, [type]);
+
+  const handleToggleFlag = async (key: string, enabled: boolean) => {
+    try {
+      setFlags(prev => prev.map(f => f.key === key ? { ...f, enabled } : f));
+      
+      const res = await fetch("/api/admin/feature-flags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, enabled }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        alert(json.error || "Failed to update feature flag.");
+        setFlags(prev => prev.map(f => f.key === key ? { ...f, enabled: !enabled } : f));
+      }
+    } catch (err) {
+      alert("Network error updating feature flag.");
+      setFlags(prev => prev.map(f => f.key === key ? { ...f, enabled: !enabled } : f));
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -98,58 +139,31 @@ export function MockSection({ title, type }: { title: string; type: "feedback" |
         <div className="p-6 rounded-2xl border border-white/5 bg-[#141414]/60 backdrop-blur-md space-y-4">
           <div className="flex items-center gap-3 pb-3 border-b border-white/5">
             <Settings className="h-5 w-5 text-cyan-400" />
-            <h3 className="text-sm font-semibold text-white">General Platform Settings</h3>
+            <h3 className="text-sm font-semibold text-white">Database Feature Flags</h3>
           </div>
           
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-300">Disable Guest Demo Chat</label>
-                <p className="text-[11px] text-slate-500 mt-0.5">Restrict sandbox test queries to logged-in profiles only.</p>
-              </div>
-              <input type="checkbox" className="h-4.5 w-4.5 rounded border-white/10 bg-[#0a0a0a] text-cyan-500 accent-cyan-500" />
+          {flagsLoading ? (
+            <div className="flex items-center gap-2 text-xs text-slate-500 py-4">
+              <span className="animate-spin">⌛</span> Loading feature flags...
             </div>
-
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-300">Enable Maintenance Mode</label>
-                <p className="text-[11px] text-slate-500 mt-0.5">Lock application and display a scheduled updates screen.</p>
-              </div>
-              <input type="checkbox" className="h-4.5 w-4.5 rounded border-white/10 bg-[#0a0a0a] text-cyan-500 accent-cyan-500" />
+          ) : (
+            <div className="space-y-4">
+              {flags.map((flag) => (
+                <div key={flag.key} className="flex items-center justify-between gap-4 py-2 border-b border-white/[0.02] last:border-0">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 capitalize">{flag.key.replace("_", " ")}</label>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{flag.description}</p>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={flag.enabled}
+                    onChange={(e) => handleToggleFlag(flag.key, e.target.checked)}
+                    className="h-4.5 w-4.5 rounded border-white/10 bg-[#0a0a0a] text-cyan-500 accent-cyan-500 cursor-pointer" 
+                  />
+                </div>
+              ))}
             </div>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-2xl border border-white/5 bg-[#141414]/60 backdrop-blur-md space-y-4">
-          <div className="flex items-center gap-3 pb-3 border-b border-white/5">
-            <ShieldAlert className="h-5 w-5 text-cyan-400" />
-            <h3 className="text-sm font-semibold text-white">Gemini API Rate Limiting</h3>
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="font-semibold text-slate-300">Max Free Requests Per User / Day</span>
-                <span className="text-cyan-400 font-bold">50 requests</span>
-              </div>
-              <input type="range" min="10" max="200" defaultValue="50" className="w-full h-1 bg-[#0a0a0a] rounded-lg appearance-none cursor-pointer accent-cyan-500" />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="font-semibold text-slate-300">Max PDF Upload Count per User</span>
-                <span className="text-cyan-400 font-bold">10 documents</span>
-              </div>
-              <input type="range" min="3" max="50" defaultValue="10" className="w-full h-1 bg-[#0a0a0a] rounded-lg appearance-none cursor-pointer accent-cyan-500" />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3 pt-2">
-          <Button variant="ghost" className="h-10 px-5 text-xs text-slate-400 hover:text-slate-200">Reset</Button>
-          <Button className="h-10 px-5 text-xs font-semibold bg-cyan-500 hover:bg-cyan-600 text-black flex items-center gap-2">
-            <Save className="h-4 w-4" /> Save Configuration
-          </Button>
+          )}
         </div>
       </div>
     </div>

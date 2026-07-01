@@ -19,7 +19,8 @@ import {
   Sparkles, 
   Users, 
   Bell,
-  ArrowLeft
+  ArrowLeft,
+  Activity
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import { AiAnalyticsTab } from "./AiAnalyticsTab";
 import { MarketingTab } from "./MarketingTab";
 import { AgentTab } from "./AgentTab";
 import { MockSection } from "./MockSection";
+import { HealthTab } from "./HealthTab";
 
 type NavItem = {
   name: string;
@@ -56,6 +58,7 @@ export function AdminDashboardShell() {
     { name: "Learning Analytics", tab: "learning", icon: BookOpen },
     { name: "AI Analytics", tab: "ai", icon: Cpu },
     { name: "Marketing", tab: "marketing", icon: Megaphone },
+    { name: "System Health", tab: "health", icon: Activity },
     { name: "Feedback", tab: "feedback", icon: MessageSquare },
     { name: "Announcements", tab: "announcements", icon: Bell },
     { name: "Settings", tab: "settings", icon: Settings },
@@ -84,6 +87,8 @@ export function AdminDashboardShell() {
         return <AiAnalyticsTab />;
       case "marketing":
         return <MarketingTab />;
+      case "health":
+        return <HealthTab />;
       case "agents":
         return <AgentTab />;
       case "feedback":

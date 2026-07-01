@@ -4,6 +4,7 @@ import type { ChatMessage } from "@/lib/chat/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DEFAULT_STUDY_SESSION_TITLE, generateStudySessionTitle } from "@/lib/study-sessions/title";
 import type { StudySessionRecord } from "@/lib/study-sessions/types";
+import { emitAnalyticsEvent } from "@/lib/analytics/events";
 
 function getLastUserMessage(messages: ChatMessage[]) {
   return [...messages].reverse().find((message) => message?.role === "user" && message?.content?.trim());
@@ -155,6 +156,12 @@ export async function POST(req: Request) {
       }
 
       session = createdSession;
+
+      void emitAnalyticsEvent(user.id, "session_started", {
+        sessionId: createdSession.id,
+        title: createdSession.title,
+        topicCategory: createdSession.topic_category,
+      });
     }
 
     if (session.title === DEFAULT_STUDY_SESSION_TITLE) {
@@ -206,6 +213,11 @@ export async function POST(req: Request) {
       );
     }
 
+    void emitAnalyticsEvent(user.id, "chat_sent", {
+      sessionId: session.id,
+      contentLength: lastUserMessage.content.length,
+    });
+
     let documentIds: string[] = [];
     const { data: materials } = await supabase
       .from("uploaded_materials")
@@ -239,6 +251,12 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
+
+    void emitAnalyticsEvent(user.id, "chat_received", {
+      sessionId: session.id,
+      contentLength: aiMessage.content.length,
+      sourceCount: aiMessage.sources?.length || 0,
+    });
 
     const { error: sessionUpdateError } = await supabase
       .from("study_sessions")

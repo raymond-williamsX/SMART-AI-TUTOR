@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Loader2, MoreVertical, Search, ShieldCheck, UserX, Users, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { UserDetailDrawer } from "./UserDetailDrawer";
 
 type UserRecord = {
   id: string;
@@ -31,6 +32,7 @@ export function UsersTab() {
 
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
   const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
+  const [inspectUserId, setInspectUserId] = useState<string | null>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -145,7 +147,7 @@ export function UsersTab() {
         ) : (
           <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
             <thead>
-              <tr className="border-b border-white/5 text-slate-400 font-semibold bg-[#1a1a1a]/40">
+              <tr className="border-b border-white/5 text-slate-400 font-semibold bg-[#1a1a1a]/40 font-heading">
                 <th className="p-4">Name & Email</th>
                 <th className="p-4">Auth Provider</th>
                 <th className="p-4">Joined Date</th>
@@ -160,7 +162,11 @@ export function UsersTab() {
             </thead>
             <tbody className="divide-y divide-white/5 text-slate-300">
               {users.map((u) => (
-                <tr key={u.id} className="hover:bg-white/[0.02] transition-colors group">
+                <tr 
+                  key={u.id} 
+                  onClick={() => setInspectUserId(u.id)}
+                  className="hover:bg-white/[0.02] transition-colors group cursor-pointer"
+                >
                   <td className="p-4">
                     <div className="space-y-0.5">
                       <span className="font-semibold text-white block text-sm">{u.name}</span>
@@ -191,9 +197,12 @@ export function UsersTab() {
                   <td className="p-4 font-semibold text-slate-400">
                     {u.current_plan}
                   </td>
-                  <td className="p-4 text-center relative">
+                  <td className="p-4 text-center relative" onClick={(e) => e.stopPropagation()}>
                     <button
-                      onClick={() => setActionMenuOpen(actionMenuOpen === u.id ? null : u.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActionMenuOpen(actionMenuOpen === u.id ? null : u.id);
+                      }}
                       className="h-8 w-8 rounded-lg hover:bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
                       disabled={togglingUserId === u.id}
                     >
@@ -206,7 +215,10 @@ export function UsersTab() {
                     {actionMenuOpen === u.id && (
                       <div className="absolute right-12 top-2 z-10 w-44 rounded-xl border border-white/10 bg-[#1c1c1e] p-1 shadow-2xl text-left">
                         <button
-                          onClick={() => handleToggleAdmin(u.id, u.status)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleAdmin(u.id, u.status);
+                          }}
                           className="w-full px-3 py-2 text-xs rounded-lg text-slate-200 hover:bg-white/5 flex items-center gap-2 font-medium"
                         >
                           {u.status === "Admin" ? (
@@ -219,7 +231,10 @@ export function UsersTab() {
                             </>
                           )}
                         </button>
-                        <button className="w-full px-3 py-2 text-xs rounded-lg text-red-400 hover:bg-red-500/10 flex items-center gap-2 font-medium">
+                        <button 
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full px-3 py-2 text-xs rounded-lg text-red-400 hover:bg-red-500/10 flex items-center gap-2 font-medium"
+                        >
                           <UserX className="h-3.5 w-3.5 text-red-500" /> Ban User
                         </button>
                       </div>
@@ -233,8 +248,8 @@ export function UsersTab() {
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex justify-between items-center text-xs">
-        <span className="text-slate-500 font-medium">
+      <div className="flex justify-between items-center text-xs font-medium">
+        <span className="text-slate-500">
           Showing page <strong>{page}</strong> of <strong>{totalPages}</strong> ({totalCount} total users)
         </span>
         <div className="flex gap-2">
@@ -256,6 +271,11 @@ export function UsersTab() {
           </Button>
         </div>
       </div>
+
+      {/* Drawer Overlay */}
+      {inspectUserId && (
+        <UserDetailDrawer userId={inspectUserId} onClose={() => setInspectUserId(null)} />
+      )}
     </div>
   );
 }

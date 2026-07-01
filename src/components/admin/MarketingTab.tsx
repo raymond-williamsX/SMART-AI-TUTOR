@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowUpRight, BarChart2, Globe, Megaphone, Share2, Users } from "lucide-react";
+import { ReferralsWidget } from "./ReferralsWidget";
 
 type AttributionStats = {
   tiktok: number;
@@ -243,6 +244,9 @@ export function MarketingTab() {
           </div>
         </div>
       </div>
+
+      {/* Referral Analytics widget */}
+      <ReferralsWidget />
     </div>
   );
 }
